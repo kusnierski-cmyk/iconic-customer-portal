@@ -2,70 +2,90 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kundenportal | ICONIC VISUAL CONCEPTS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ICONIC | Customer Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        :root { --bg: #050505; --panel: #111; --cyan: #00CED1; --white: #fff; --gray: #888; --success: #2ed573; }
-        body { background: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .header { font-family: 'Rajdhani', sans-serif; border-bottom: 1px solid var(--cyan); padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .card { background: var(--panel); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 25px; }
-        .status-badge { background: var(--cyan); color: #000; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
-        
-        /* Kalender Styling */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 15px; }
-        .cal-day { aspect-ratio: 1; border: 1px solid #222; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #444; }
-        .cal-day.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,206,209,0.05); font-weight: bold; }
+        :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; min-height: 100vh; }
+        .hidden { display: none !important; }
 
-        /* Aktivitäten */
-        .log-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 0.9rem; }
-        .log-item:last-child { border: none; }
+        /* --- HEADER --- */
+        .header { height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: rgba(17,17,17,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,206,209,0.1); }
+        .header h1 { font-family: 'Rajdhani'; font-size: 1.5rem; letter-spacing: 2px; }
+        .header span { color: var(--cyan); }
 
-        .form-control { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
-        .btn { background: var(--cyan); color: #000; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
+        /* --- LIVE STATUS --- */
+        .pulse-card { 
+            background: linear-gradient(135deg, #111 0%, #080808 100%);
+            border-radius: 20px; padding: 30px; text-align: center; margin: 20px;
+            position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .pulse-card.active { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 206, 209, 0.2); }
+        .active-pulse { display: none; width: 12px; height: 12px; background: var(--cyan); border-radius: 50%; margin: 0 auto 10px; }
+        .active .active-pulse { display: block; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 206, 209, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 206, 209, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 206, 209, 0); } }
+
+        /* --- SECTIONS --- */
+        .section-title { font-family: 'Rajdhani'; font-size: 1.2rem; color: var(--gray); margin: 30px 20px 15px; text-transform: uppercase; letter-spacing: 1px; }
         
-        #login-view { text-align: center; margin-top: 100px; }
-        h2 { font-family: 'Rajdhani'; color: var(--cyan); margin-top: 0; }
+        /* --- LOGS (ALLE VERGANGENEN DATEN) --- */
+        .log-container { padding: 0 20px; }
+        .log-card { 
+            background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; 
+            border-left: 4px solid var(--cyan); display: flex; justify-content: space-between; align-items: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- REQUEST FORM --- */
+        .request-box { background: var(--panel); margin: 0 20px 50px; padding: 25px; border-radius: 20px; border: 1px solid rgba(0,206,209,0.1); }
+        input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-family: inherit; outline: none; }
+        input:focus, textarea:focus { border-color: var(--cyan); }
+        .btn { width: 100%; background: var(--cyan); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; font-family: 'Rajdhani'; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; }
+
+        /* --- AUTH --- */
+        #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 10000; }
+        .auth-card { background: var(--panel); padding: 40px; border-radius: 20px; border: 1px solid var(--cyan); width: 90%; max-width: 380px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="login-view" class="container">
-        <h1 style="font-family: 'Rajdhani';">CLIENT <span>LOGIN</span></h1>
-        <input type="email" id="email" class="form-control" style="max-width:300px" placeholder="E-Mail"><br>
-        <input type="password" id="password" class="form-control" style="max-width:300px" placeholder="Passwort"><br>
-        <button class="btn" style="max-width:300px" onclick="login()">Anmelden</button>
+    <div id="auth-screen">
+        <div class="auth-card">
+            <h2 style="font-family:'Rajdhani'; margin-bottom:25px; letter-spacing:2px;">ICONIC <span style="color:var(--cyan)">PORTAL</span></h2>
+            <input type="email" id="login-email" placeholder="E-Mail Adresse">
+            <input type="password" id="login-pass" placeholder="Passwort">
+            <button class="btn" onclick="handleAuth()">Einloggen</button>
+            <p id="auth-error" style="color:var(--danger); font-size:0.8rem; margin-top:15px;"></p>
+        </div>
     </div>
 
-    <div id="portal-view" class="container" style="display:none;">
+    <div id="portal-content" class="hidden">
         <div class="header">
-            <h1>WELCOME, <span id="client-name" style="color:var(--cyan)">...</span></h1>
-            <button onclick="logout()" style="background:none; border:none; color:var(--gray); cursor:pointer;"><i class="fa-solid fa-power-off"></i></button>
+            <h1>ICONIC <span>PORTAL</span></h1>
+            <button onclick="logout()" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fa-solid fa-power-off"></i></button>
         </div>
 
-        <div id="project-card" class="card">
-            <h2>PROJEKT STATUS</h2>
-            <div id="project-info">Lade Daten...</div>
+        <div id="pulse-card" class="pulse-card">
+            <div class="active-pulse"></div>
+            <h4 id="live-label" style="font-family:'Rajdhani'; color:var(--gray); letter-spacing:2px;">SYSTEM STANDBY</h4>
+            <h2 id="live-project" style="font-family:'Rajdhani'; font-size:1.8rem; margin:10px 0;">BEREIT</h2>
+            <p id="live-desc" style="font-size:0.8rem; color:var(--gray);">Keine aktive Bearbeitung.</p>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-            <div class="card">
-                <h2>AKTIVITÄT</h2>
-                <div class="calendar-grid" id="calendar"></div>
-                <p style="font-size: 0.7rem; color: var(--gray); margin-top: 15px;">Markierte Tage zeigen Arbeitszeit an.</p>
-            </div>
-            
-            <div class="card">
-                <h2>LETZTE LOGS</h2>
-                <div id="activity-logs">Keine Aktivitäten aufgezeichnet.</div>
-            </div>
+        <h3 class="section-title">Aktivitäten & Historie</h3>
+        <div class="log-container" id="all-activities">
+            <p style="text-align:center; color:var(--gray); font-size:0.8rem;">Suche Aktivitäten...</p>
         </div>
 
-        <div class="card">
-            <h2>NEUE ANFRAGE / NACHRICHT</h2>
-            <textarea id="request-text" class="form-control" rows="4" placeholder="Beschreibe deine Änderungswünsche oder eine neue Anfrage..."></textarea>
+        <h3 class="section-title">Neue Anfrage</h3>
+        <div class="request-box">
+            <input type="text" id="req-title" placeholder="Betreff (z.B. Logo Änderung)">
+            <textarea id="req-msg" rows="4" placeholder="Deine Nachricht an uns..."></textarea>
             <button class="btn" onclick="sendRequest()">Anfrage senden</button>
         </div>
     </div>
@@ -73,7 +93,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, collection, onSnapshot, addDoc, query, where, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -88,102 +108,100 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentClient = "";
+        // Deine Admin UID (muss gleich bleiben wie im CRM)
+        const ADMIN_UID = "69oYfCidK8MOfT9l9Kshh0U6VpS2"; 
 
-        window.login = () => {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            signInWithEmailAndPassword(auth, e, p).catch(err => alert("Login fehlgeschlagen"));
+        window.handleAuth = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            try { await signInWithEmailAndPassword(auth, email, pass); } 
+            catch (e) { document.getElementById('auth-error').innerText = "Fehler beim Login."; }
         };
 
-        window.logout = () => signOut(auth);
+        window.logout = () => signOut(auth).then(() => location.reload());
 
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('login-view').style.display = 'none';
-                document.getElementById('portal-view').style.display = 'block';
+            if(user) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('portal-content').classList.remove('hidden');
                 
-                // Wir nutzen wieder den Namen (z.B. Test)
-                currentClient = user.displayName || user.email.split('@')[0];
-                document.getElementById('client-name').innerText = currentClient.toUpperCase();
-
-                loadProjectData();
-                loadActivityLogs();
-                renderCalendarBase();
-            } else {
-                document.getElementById('login-view').style.display = 'block';
-                document.getElementById('portal-view').style.display = 'none';
+                // Nutzt den Namen der Registrierung (Test)
+                const clientName = user.displayName || user.email.split('@')[0];
+                startSync(clientName);
             }
         });
 
-        function loadProjectData() {
-            onSnapshot(doc(db, "projekte", currentClient), (docSnap) => {
-                const info = document.getElementById('project-info');
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    info.innerHTML = `
-                        <h3 style="margin:0">${data.projektname || 'Projekt'}</h3>
-                        <p>Status: <span class="status-badge">${data.status}</span></p>
-                        <small style="color:var(--gray)">Zuletzt aktualisiert: ${data.letztes_update}</small>
-                    `;
+        function startSync(name) {
+            const cleanName = name.toLowerCase().trim();
+
+            // 1. Live Status Sync
+            onSnapshot(doc(db, "global_status", "live"), (snap) => {
+                const data = snap.data();
+                const card = document.getElementById('pulse-card');
+                if(data && data.active && data.partner.toLowerCase().trim() === cleanName) {
+                    card.classList.add('active');
+                    document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
+                    document.getElementById('live-project').innerText = data.project.toUpperCase();
+                    document.getElementById('live-desc').innerText = "Wir arbeiten gerade an deinem Projekt.";
                 } else {
-                    info.innerHTML = "Kein aktives Projekt gefunden.";
+                    card.classList.remove('active');
+                    document.getElementById('live-label').innerText = "SYSTEM STANDBY";
+                    document.getElementById('live-project').innerText = "BEREIT";
+                    document.getElementById('live-desc').innerText = "Aktuell keine aktive Bearbeitung.";
                 }
             });
-        }
 
-        function loadActivityLogs() {
-            // Sucht in allen worklogs nach Einträgen für diesen Partner (Test)
-            // Hinweis: Hierfür muss in der Firebase ggf. ein Index erstellt werden (Link erscheint in Konsole falls nötig)
-            const q = query(collection(db, "users/69oYfCidK8MOfT9l9Kshh0U6VpS2/worklogs"), where("partner", "==", currentClient));
-            
+            // 2. Aktivitäten Historie (Alle vergangenen Daten anzeigen)
+            const q = query(collection(db, "users", ADMIN_UID, "worklogs"), orderBy("date", "desc"));
             onSnapshot(q, (snap) => {
-                const logCont = document.getElementById('activity-logs');
-                const calDays = document.querySelectorAll('.cal-day');
-                logCont.innerHTML = "";
+                const container = document.getElementById('all-activities');
+                container.innerHTML = "";
                 
-                snap.forEach(doc => {
-                    const log = doc.data();
-                    // Log Liste
-                    logCont.innerHTML += `
-                        <div class="log-item">
-                            <span>${log.date} - ${log.project}</span>
-                            <span style="color:var(--cyan)">${log.duration}h</span>
+                const filtered = snap.docs
+                    .map(d => d.data())
+                    .filter(l => l.partner.toLowerCase().trim() === cleanName);
+
+                if(filtered.length === 0) {
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Aktivitäten aufgezeichnet.</p>`;
+                    return;
+                }
+
+                filtered.forEach(log => {
+                    container.innerHTML += `
+                        <div class="log-card">
+                            <div>
+                                <div style="font-weight:600; font-size:0.95rem;">${log.project}</div>
+                                <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">${new Date(log.date).toLocaleDateString('de-DE')}</div>
+                            </div>
+                            <div style="text-align:right">
+                                <div style="font-family:'Rajdhani'; font-weight:700; color:var(--cyan); font-size:1.1rem;">${log.duration}h</div>
+                                <div style="font-size:0.6rem; color:var(--gray); text-transform:uppercase;">Arbeitszeit</div>
+                            </div>
                         </div>
                     `;
-                    // Kalender Markierung
-                    const dayNum = new Date(log.date).getDate();
-                    const calEl = document.getElementById('day-' + dayNum);
-                    if(calEl) calEl.classList.add('active');
                 });
             });
         }
 
         window.sendRequest = async () => {
-            const text = document.getElementById('request-text').value;
-            if(!text) return;
+            const title = document.getElementById('req-title').value;
+            const msg = document.getElementById('req-msg').value;
+            const clientName = auth.currentUser.displayName || auth.currentUser.email.split('@')[0];
 
-            try {
-                await addDoc(collection(db, "anfragen"), {
-                    kunde: currentClient,
-                    nachricht: text,
-                    zeitpunkt: new Date().toLocaleString(),
-                    status: "neu"
-                });
-                alert("Anfrage wurde erfolgreich an das CRM gesendet!");
-                document.getElementById('request-text').value = "";
-            } catch (e) {
-                alert("Fehler beim Senden.");
-            }
+            if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
+
+            await addDoc(collection(db, "requests"), {
+                title: title,
+                message: msg,
+                partner: clientName,
+                timestamp: Date.now(),
+                status: "offen"
+            });
+
+            alert("Anfrage wurde an das CRM übertragen!");
+            document.getElementById('req-title').value = "";
+            document.getElementById('req-msg').value = "";
         };
-
-        function renderCalendarBase() {
-            const cal = document.getElementById('calendar');
-            cal.innerHTML = "";
-            for(let i=1; i<=31; i++) {
-                cal.innerHTML += `<div class="cal-day" id="day-${i}">${i}</div>`;
-            }
-        }
     </script>
 </body>
 </html>
