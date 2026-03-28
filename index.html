@@ -43,6 +43,7 @@
             padding-bottom: 15px; text-align: center; display: flex; justify-content: space-between; align-items: center;
         }
         .header span { color: var(--cyan); }
+        #user-display { font-size: 0.8rem; color: var(--gray); display: block; margin-top: 5px; font-family: 'Montserrat'; letter-spacing: 0; }
 
         .status-card { 
             background: var(--panel); border-radius: 20px; padding: 40px 20px; 
@@ -106,7 +107,10 @@
 
     <div id="main-content" class="hidden">
         <div class="header">
-            <div>ICONIC <span>PORTAL</span></div>
+            <div>
+                ICONIC <span>PORTAL</span>
+                <span id="user-display"></span>
+            </div>
             <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
 
@@ -172,7 +176,6 @@
         let workLogs = [];
         let authMode = 'login';
 
-        // Globale Funktionen für Handy-Browser
         window.toggleAuth = (mode) => {
             authMode = mode;
             document.getElementById('tab-login').classList.toggle('active', mode === 'login');
@@ -188,21 +191,13 @@
             const err = document.getElementById('auth-error');
             
             err.style.color = "var(--cyan)";
-            err.innerText = "Prüfe Daten...";
+            err.innerText = "Verarbeitung...";
 
             if(!email || !pass) {
                 err.style.color = "var(--danger)";
                 err.innerText = "E-Mail oder Passwort fehlt.";
                 return;
             }
-
-            // Timeout nach 10 Sek
-            const timeout = setTimeout(() => {
-                if(err.innerText.includes("Prüfe")) {
-                    err.style.color = "var(--danger)";
-                    err.innerText = "Netzwerk-Fehler: Google antwortet nicht.";
-                }
-            }, 10000);
 
             try {
                 if(authMode === 'login') {
@@ -215,14 +210,14 @@
                     
                     const cred = await createUserWithEmailAndPassword(auth, email, pass);
                     await updateProfile(cred.user, { displayName: company });
-                    location.reload();
+                    // Kein Reload! Der Auth-Listener oben regelt den Wechsel automatisch.
                 }
-                clearTimeout(timeout);
             } catch (e) { 
-                clearTimeout(timeout);
                 console.error("Auth Error:", e);
                 err.style.color = "var(--danger)";
-                err.innerText = "Fehler: " + (e.code || "Unbekannter Fehler"); 
+                if(e.code === 'auth/wrong-password') err.innerText = "Passwort falsch.";
+                else if(e.code === 'auth/user-not-found') err.innerText = "Konto nicht gefunden.";
+                else err.innerText = "Fehler: " + (e.code || e.message); 
             }
         };
 
@@ -230,7 +225,8 @@
 
         onAuthStateChanged(auth, (user) => {
             if(user) {
-                userCompany = user.displayName;
+                userCompany = user.displayName || "Kunde";
+                document.getElementById('user-display').innerText = userCompany;
                 document.getElementById('auth-overlay').classList.add('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
                 initPortal();
