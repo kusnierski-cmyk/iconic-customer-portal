@@ -31,7 +31,7 @@
         .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .insight-card { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.03); text-align: center; }
         
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; margin-bottom: 20px; min-height: 200px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; margin-bottom: 20px; }
         .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border-radius: 6px; background: #080808; color: #444; }
         .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,206,209,0.2); background: rgba(0,206,209,0.1); }
 
@@ -101,7 +101,10 @@
         setPersistence(auth, browserLocalPersistence);
 
         const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2"; 
-        let userCompany = "";
+        let userDisplayName = "";
+
+        // Hilfsfunktion für den Namensvergleich (entfernt Leerzeichen & Sonderzeichen)
+        const normalize = (str) => str ? str.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : "";
 
         window.handleAuth = async () => {
             const e = document.getElementById('email').value.trim();
@@ -115,8 +118,7 @@
 
         onAuthStateChanged(auth, (user) => {
             if(user) {
-                // Wir nutzen den displayName des Auth-Users. WICHTIG: Im CRM muss der Kunde GENAU so heißen.
-                userCompany = (user.displayName || "Kunde").trim().toLowerCase();
+                userDisplayName = user.displayName || "Kunde";
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('main-content').classList.remove('hidden');
                 initPortal();
@@ -124,14 +126,16 @@
         });
 
         function initPortal() {
-            // 1. Live Status Sync - TEXTE GEÄNDERT WIE GEWÜNSCHT
+            const userKey = normalize(userDisplayName);
+
+            // 1. Live Status Sync
             onSnapshot(doc(db, "global_status", "live"), (s) => {
                 const card = document.getElementById('status-card');
                 if(s.exists()) {
                     const d = s.data();
-                    if(d.active && d.partner && d.partner.trim().toLowerCase() === userCompany) {
+                    if(d.active && normalize(d.partner) === userKey) {
                         card.classList.add('active');
-                        document.getElementById('status-title').innerText = "JETZT LIVE GEARBEITET";
+                        document.getElementById('status-title').innerText = "PROJEKT IN ARBEIT";
                         document.getElementById('status-desc').innerText = "An deinem Projekt wird aktuell gearbeitet.";
                         return;
                     }
@@ -141,10 +145,10 @@
                 document.getElementById('status-desc').innerText = "Bereit für neue Aufgaben.";
             });
 
-            // 2. Worklogs Sync - FILTERUNG VERBESSERT
+            // 2. Worklogs Sync
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
                 const logs = snap.docs.map(d => d.data())
-                    .filter(l => l.partner && l.partner.trim().toLowerCase() === userCompany)
+                    .filter(l => normalize(l.partner) === userKey)
                     .sort((a,b) => new Date(b.date) - new Date(a.date));
                 
                 renderStats(logs);
@@ -212,7 +216,7 @@
                 await addDoc(collection(db, "requests"), {
                     title: title,
                     desc: msg,
-                    partner: userCompany, // Wird klein gesendet, passt zum CRM Filter
+                    partner: userDisplayName,
                     status: "offen",
                     timestamp: Date.now()
                 });
