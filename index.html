@@ -115,10 +115,8 @@
 
             try { 
                 const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-                // WICHTIG: Wir speichern den eingegebenen Namen im Profil, falls er noch nicht da ist
-                // So erkennt das System beim nächsten Sync sofort den richtigen Namen.
                 await updateProfile(userCredential.user, { displayName: name });
-                // Seite wird durch onAuthStateChanged aktualisiert
+                location.reload(); 
             } 
             catch (e) { 
                 document.getElementById('auth-error').innerText = "Login fehlgeschlagen. Daten prüfen."; 
@@ -131,7 +129,6 @@
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('portal-content').classList.remove('hidden');
-                // Er nimmt jetzt den fest hinterlegten Namen aus dem Auth-Profil
                 startSync(user.displayName);
             }
         });
@@ -140,7 +137,6 @@
             if(!clientName) return;
             const cleanName = clientName.toLowerCase().trim();
 
-            // 1. LIVE STATUS
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
@@ -159,16 +155,20 @@
                 }
             });
 
-            // 2. AKTIVITÄTEN
-            onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
+            const worklogRef = collection(db, "users", ADMIN_UID, "worklogs");
+            onSnapshot(worklogRef, (snap) => {
                 const container = document.getElementById('all-activities');
-                let logs = snap.docs.map(d => d.data());
+                if (snap.empty) {
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Daten gefunden.</p>`;
+                    return;
+                }
 
+                let logs = snap.docs.map(d => d.data());
                 const filtered = logs.filter(l => l.partner && l.partner.toLowerCase().trim() === cleanName);
                 filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
                 if(filtered.length === 0) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Aktivitäten für "${clientName}" gefunden.</p>`;
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Aktivitäten für "${clientName}" gefunden.</p>`;
                     return;
                 }
 
@@ -196,8 +196,7 @@
             const title = document.getElementById('req-title').value;
             const msg = document.getElementById('req-msg').value;
             if(!auth.currentUser) return;
-            
-            if(!title || !msg) return alert("Felder ausfüllen.");
+            if(!title || !msg) return alert("Bitte alle Felder ausfüllen.");
 
             try {
                 await addDoc(collection(db, "requests"), {
@@ -210,9 +209,7 @@
                 alert("Anfrage gesendet!");
                 document.getElementById('req-title').value = "";
                 document.getElementById('req-msg').value = "";
-            } catch (e) {
-                alert("Fehler.");
-            }
+            } catch (e) { alert("Fehler beim Senden."); }
         };
     </script>
 </body>
