@@ -7,8 +7,7 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ICONIC">
-    <link rel="apple-touch-icon" href="https://your-url.com/icon.png"> <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Iconic%20Portal%22,%22short_name%22:%22Iconic%22,%22start_url%22:%22index.html%22,%22display%22:%22standalone%22,%22background_color%22:%22#050505%22,%22theme_color%22:%22#00CED1%22}">
+    <link rel="apple-touch-icon" href="icon-512.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,15 +16,7 @@
         :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* Optimierung für das iPhone-Display (Notch-Abstand) */
-        body { 
-            background-color: var(--bg); 
-            color: var(--white); 
-            font-family: 'Montserrat', sans-serif; 
-            padding: calc(20px + env(safe-area-inset-top)) 20px 50px 20px; 
-            max-width: 600px; 
-            margin: 0 auto; 
-        }
+        body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; padding: calc(20px + env(safe-area-inset-top)) 20px 50px 20px; max-width: 600px; margin: 0 auto; }
         
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .auth-card { background: var(--panel); padding: 30px; border-radius: 20px; border: 1px solid var(--cyan); width: 100%; max-width: 400px; }
@@ -37,7 +28,7 @@
         .header { font-family: 'Rajdhani'; font-size: 1.5rem; margin-bottom: 30px; border-bottom: 1px solid rgba(0,206,209,0.3); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .header span { color: var(--cyan); }
         
-        .status-card { background: var(--panel); border-radius: 20px; padding: 40px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center; position: relative; overflow: hidden; }
+        .status-card { background: var(--panel); border-radius: 20px; padding: 40px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center; position: relative; overflow: hidden; transition: 0.5s; }
         .status-card.active { border-color: var(--cyan); animation: pulseGlow 2s infinite alternate; }
         @keyframes pulseGlow { 0% { box-shadow: 0 0 10px rgba(0, 206, 209, 0.1); } 100% { box-shadow: 0 0 30px rgba(0, 206, 209, 0.4); border-color: #fff; } }
         .status-card.active::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(transparent, var(--cyan), transparent 30%); animation: rotate 4s linear infinite; z-index: 0; opacity: 0.2; }
@@ -49,13 +40,15 @@
         
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; margin-bottom: 20px; }
         .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border-radius: 6px; background: #080808; color: #444; }
-        .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); font-weight: 700; box-shadow: 0 0 10px rgba(0,206,209,0.2); }
+        .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); font-weight: 700; box-shadow: 0 0 10px rgba(0,206,209,0.2); background: rgba(0,206,209,0.05); }
 
-        .log-item { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 10px; font-size: 0.85rem; border-left: 3px solid var(--cyan); }
+        .log-item { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 10px; font-size: 0.85rem; border-left: 3px solid var(--cyan); animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .log-meta { display: flex; justify-content: space-between; color: var(--gray); font-size: 0.75rem; margin-top: 5px; }
 
-        .form-section { background: var(--panel); padding: 20px; border-radius: 20px; margin-top: 20px; }
-        input, textarea { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-family: inherit; }
+        .form-section { background: var(--panel); padding: 20px; border-radius: 20px; margin-top: 20px; border: 1px solid rgba(255,255,255,0.03); }
+        input, textarea { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-family: inherit; transition: 0.3s; }
+        input:focus { border-color: var(--cyan); outline: none; }
         .btn-send { width: 100%; background: var(--cyan); border: none; padding: 15px; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: 'Rajdhani'; color: #000; text-transform: uppercase; }
     </style>
 </head>
@@ -96,8 +89,8 @@
 
         <div class="form-section">
             <h3 style="font-family:'Rajdhani'; margin-bottom:15px; color:var(--cyan)">NEUE ANFRAGE</h3>
-            <input type="text" id="req-title" placeholder="Projekt/Thema">
-            <textarea id="req-msg" rows="3" placeholder="Ihre Nachricht..."></textarea>
+            <input type="text" id="req-title" placeholder="Projekt / Thema">
+            <textarea id="req-msg" rows="3" placeholder="Beschreiben Sie kurz Ihr Anliegen..."></textarea>
             <button class="btn-send" onclick="sendRequest()">Anfrage senden</button>
         </div>
     </div>
@@ -120,7 +113,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // EINGELOGGT BLEIBEN AKTIVIEREN
         setPersistence(auth, browserLocalPersistence);
 
         const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2"; 
@@ -134,6 +126,7 @@
         window.handleAuth = async () => {
             const e = document.getElementById('email').value.trim();
             const p = document.getElementById('pass').value;
+            const err = document.getElementById('auth-error');
             try {
                 if(document.getElementById('register-fields').classList.contains('hidden')) {
                     await signInWithEmailAndPassword(auth, e, p);
@@ -143,7 +136,7 @@
                     await updateProfile(res.user, { displayName: comp });
                     location.reload();
                 }
-            } catch (error) { alert(error.message); }
+            } catch (error) { err.innerText = error.message; }
         };
 
         window.logout = () => signOut(auth).then(() => location.reload());
@@ -158,15 +151,16 @@
         });
 
         function initPortal() {
+            // Live Status Sync
             onSnapshot(doc(db, "global_status", "live"), (s) => {
                 const card = document.getElementById('status-card');
                 if(!s.exists()) return;
                 const d = s.data();
-                const isMy = d.partner && d.partner.toLowerCase() === userCompany.toLowerCase();
+                const isMy = d.partner && d.partner.trim().toLowerCase() === userCompany.trim().toLowerCase();
                 if(d.active && isMy) {
                     card.classList.add('active');
                     document.getElementById('status-title').innerText = "LIVE IN PROGRESS";
-                    document.getElementById('status-desc').innerText = "Bearbeitung: " + (d.project || "Projekt läuft");
+                    document.getElementById('status-desc').innerText = "Bearbeitung: " + (d.project || "Aktiv");
                 } else {
                     card.classList.remove('active');
                     document.getElementById('status-title').innerText = "SYSTEM STANDBY";
@@ -174,6 +168,7 @@
                 }
             });
 
+            // Worklogs Sync
             const q = query(collection(db, "users", ADMIN_UID, "worklogs"), where("partner", "==", userCompany));
             onSnapshot(q, (snap) => {
                 const logs = snap.docs.map(d => d.data()).sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -187,7 +182,12 @@
             const uniqueDays = new Set(logs.map(l => l.date)).size;
             document.getElementById('insight-days').innerText = uniqueDays;
             let totalMin = 0;
-            logs.forEach(l => { if(l.duration?.includes(':')) { const [h, m] = l.duration.split(':').map(Number); totalMin += (h * 60) + m; } });
+            logs.forEach(l => { 
+                if(l.duration && l.duration.includes(':')) { 
+                    const [h, m] = l.duration.split(':').map(Number); 
+                    totalMin += (h * 60) + m; 
+                } 
+            });
             document.getElementById('insight-hours').innerText = (totalMin / 60).toFixed(1) + "h";
             if(logs.length > 0) document.getElementById('insight-main-project').innerText = logs[0].project;
         }
@@ -197,7 +197,13 @@
             grid.innerHTML = "";
             const now = new Date();
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            const workedDates = logs.map(l => l.date);
+            
+            // Konvertiert alle Log-Daten in ein einheitliches Format zum Vergleich
+            const workedDates = logs.map(l => {
+                const d = new Date(l.date);
+                return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+            });
+
             for(let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
                 const day = document.createElement('div');
@@ -209,25 +215,49 @@
 
         function renderDetails(logs) {
             const container = document.getElementById('log-details');
-            container.innerHTML = '<h3 style="font-family:\'Rajdhani\'; margin-bottom:15px; font-size:1rem;">LETZTE AKTIVITÄTEN</h3>';
+            container.innerHTML = '<h3 style="font-family:\'Rajdhani\'; margin-bottom:15px; font-size:1rem; color:var(--gray)">LETZTE AKTIVITÄTEN</h3>';
+            if(logs.length === 0) {
+                container.innerHTML += '<p style="font-size:0.8rem; color:#444">Noch keine Einträge vorhanden.</p>';
+                return;
+            }
             logs.slice(0, 5).forEach(l => {
                 const item = document.createElement('div');
                 item.className = 'log-item';
-                item.innerHTML = `<strong>${l.project}</strong> - ${l.duration}h<div class="log-meta"><span>${l.date} | Start: ${l.startTime || '--:--'}</span><span style="color:var(--cyan)">${l.cost || '0.00'} €</span></div>`;
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>${l.project}</strong>
+                        <span style="color:var(--cyan)">${l.duration}h</span>
+                    </div>
+                    <div class="log-meta">
+                        <span>${l.date} | Start: ${l.startTime || '--:--'}</span>
+                        <span style="font-weight:600">${l.cost || '0.00'} €</span>
+                    </div>
+                `;
                 container.appendChild(item);
             });
         }
 
         window.sendRequest = async () => {
-            const title = document.getElementById('req-title').value;
-            const msg = document.getElementById('req-msg').value;
-            if(!title || !msg) return alert("Bitte alles ausfüllen.");
+            const title = document.getElementById('req-title').value.trim();
+            const msg = document.getElementById('req-msg').value.trim();
+            if(!title || !msg) return alert("Bitte füllen Sie beide Felder aus.");
+            
             try {
-                await addDoc(collection(db, "requests"), { partner: userCompany, project: title, message: msg, status: "neu", timestamp: serverTimestamp() });
-                alert("Anfrage wurde gesendet!");
-                document.getElementById('req-title').value = ""; document.getElementById('req-msg').value = "";
-            } catch (e) { alert("Fehler: " + e.message); }
+                // HIER GEÄNDERT: Feldnamen angepasst für CRM-Kompatibilität
+                await addDoc(collection(db, "requests"), {
+                    kunde: userCompany, // CRM nutzt oft "kunde" statt "partner"
+                    titel: title,       // CRM nutzt "titel"
+                    nachricht: msg,     // CRM nutzt "nachricht"
+                    status: "neu",
+                    datum: new Date().toLocaleDateString('de-DE'),
+                    timestamp: serverTimestamp()
+                });
+                alert("Anfrage erfolgreich gesendet!");
+                document.getElementById('req-title').value = ""; 
+                document.getElementById('req-msg').value = "";
+            } catch (e) { alert("Sende-Fehler: " + e.message); }
         };
     </script>
 </body>
 </html>
+
