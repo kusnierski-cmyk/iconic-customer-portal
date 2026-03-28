@@ -32,7 +32,7 @@
         /* --- SECTIONS --- */
         .section-title { font-family: 'Rajdhani'; font-size: 1.2rem; color: var(--gray); margin: 30px 20px 15px; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* --- LOGS (ALLE VERGANGENEN DATEN) --- */
+        /* --- LOGS --- */
         .log-container { padding: 0 20px; }
         .log-card { 
             background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; 
@@ -108,7 +108,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Deine Admin UID (muss gleich bleiben wie im CRM)
         const ADMIN_UID = "69oYfCidK8MOfT9l9Kshh0U6VpS2"; 
 
         window.handleAuth = async () => {
@@ -124,8 +123,6 @@
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('portal-content').classList.remove('hidden');
-                
-                // Nutzt den Namen der Registrierung (Test)
                 const clientName = user.displayName || user.email.split('@')[0];
                 startSync(clientName);
             }
@@ -134,7 +131,6 @@
         function startSync(name) {
             const cleanName = name.toLowerCase().trim();
 
-            // 1. Live Status Sync
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
@@ -151,12 +147,10 @@
                 }
             });
 
-            // 2. Aktivitäten Historie (Alle vergangenen Daten anzeigen)
             const q = query(collection(db, "users", ADMIN_UID, "worklogs"), orderBy("date", "desc"));
             onSnapshot(q, (snap) => {
                 const container = document.getElementById('all-activities');
                 container.innerHTML = "";
-                
                 const filtered = snap.docs
                     .map(d => d.data())
                     .filter(l => l.partner.toLowerCase().trim() === cleanName);
@@ -177,8 +171,7 @@
                                 <div style="font-family:'Rajdhani'; font-weight:700; color:var(--cyan); font-size:1.1rem;">${log.duration}h</div>
                                 <div style="font-size:0.6rem; color:var(--gray); text-transform:uppercase;">Arbeitszeit</div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
             });
         }
@@ -186,21 +179,30 @@
         window.sendRequest = async () => {
             const title = document.getElementById('req-title').value;
             const msg = document.getElementById('req-msg').value;
+            
+            if(!auth.currentUser) return alert("Bitte logge dich erneut ein.");
             const clientName = auth.currentUser.displayName || auth.currentUser.email.split('@')[0];
 
             if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
 
-            await addDoc(collection(db, "requests"), {
-                title: title,
-                message: msg,
-                partner: clientName,
-                timestamp: Date.now(),
-                status: "offen"
-            });
+            try {
+                await addDoc(collection(db, "requests"), {
+                    title: title,
+                    desc: msg,       // Hinzugefügt für CRM Kompatibilität
+                    message: msg,    // Bestehend
+                    partner: clientName,
+                    timestamp: Date.now(),
+                    date: new Date().toLocaleDateString('de-DE'),
+                    status: "offen"
+                });
 
-            alert("Anfrage wurde an das CRM übertragen!");
-            document.getElementById('req-title').value = "";
-            document.getElementById('req-msg').value = "";
+                alert("Deine Anfrage wurde erfolgreich übertragen!");
+                document.getElementById('req-title').value = "";
+                document.getElementById('req-msg').value = "";
+            } catch (e) {
+                console.error("Fehler beim Senden: ", e);
+                alert("Fehler beim Senden der Anfrage.");
+            }
         };
     </script>
 </body>
