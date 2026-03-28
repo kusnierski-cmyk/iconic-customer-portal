@@ -50,7 +50,7 @@
     <div id="auth-screen">
         <div class="auth-card">
             <h2 id="auth-title" style="font-family:'Rajdhani'; margin-bottom:25px; letter-spacing:2px;">ICONIC <span style="color:var(--cyan)">LOGIN</span></h2>
-            <input type="text" id="login-name" placeholder="Name (z.B. iconic)">
+            <input type="text" id="login-name" placeholder="Dein Firmenname">
             <input type="email" id="login-email" placeholder="E-Mail Adresse">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button class="btn" id="auth-btn" onclick="handleAuth()">Einloggen</button>
@@ -102,7 +102,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // DIE KORREKTE ID (kleines w wie im Screenshot)
         const ADMIN_UID = "wn9blxkhF7UbSfv0gnqW3EDb1zx2"; 
         let isLoginMode = true;
 
@@ -136,50 +135,55 @@
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('portal-content').classList.remove('hidden');
-                // Falls kein DisplayName da ist, nimm den Teil vor dem @ der Mail
                 const activeName = user.displayName || user.email.split('@')[0];
                 startSync(activeName);
             }
         });
 
         function startSync(name) {
-            const searchName = name.toLowerCase();
+            const searchName = name.toLowerCase().trim();
 
-            // 1. LIVE
+            // 1. LIVE STATUS (MULTI-USER)
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
-                if(data && data.active && data.partner?.toLowerCase().includes("iconic")) {
-                    card.classList.add('active');
-                    document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
-                    document.getElementById('live-project').innerText = (data.project || "Projekt").toUpperCase();
-                } else {
-                    card.classList.remove('active');
-                    document.getElementById('live-label').innerText = "SYSTEM STANDBY";
-                    document.getElementById('live-project').innerText = "BEREIT";
+                const label = document.getElementById('live-label');
+                const projectDisplay = document.getElementById('live-project');
+                
+                if(data && data.active) {
+                    const p = data.partner?.toLowerCase().trim() || "";
+                    if(p === searchName || searchName.includes(p) || p.includes(searchName)) {
+                        card.classList.add('active');
+                        label.innerText = "LIVE IN BEARBEITUNG";
+                        projectDisplay.innerText = (data.project || "Projekt").toUpperCase();
+                        return;
+                    }
                 }
+                card.classList.remove('active');
+                label.innerText = "SYSTEM STANDBY";
+                projectDisplay.innerText = "BEREIT";
             });
 
-            // 2. HISTORIE
+            // 2. HISTORIE (MULTI-USER)
             const worklogRef = collection(db, "users", ADMIN_UID, "worklogs");
             onSnapshot(worklogRef, (snap) => {
                 const container = document.getElementById('all-activities');
                 if (snap.empty) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Einträge vorhanden.</p>`;
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Daten vorhanden.</p>`;
                     return;
                 }
 
                 let logs = snap.docs
                     .map(d => d.data())
                     .filter(l => {
-                        const p = l.partner?.toLowerCase() || "";
-                        // Sucht nach "iconic" ODER deinem Namen
-                        return p.includes("iconic") || p.includes(searchName) || searchName.includes(p);
+                        const p = l.partner?.toLowerCase().trim() || "";
+                        // Der Filter vergleicht den Partner-Eintrag aus deinem CRM mit dem Loginnamen
+                        return p !== "" && (p === searchName || searchName.includes(p) || p.includes(searchName));
                     })
                     .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
                 if (logs.length === 0) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Einträge für "${name}" gefunden.</p>`;
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Willkommen! Noch keine Aktivitäten für "${name}" gelistet.</p>`;
                     return;
                 }
 
@@ -208,9 +212,9 @@
                 await addDoc(collection(db, "requests"), {
                     title, desc: msg, partner: auth.currentUser.displayName || auth.currentUser.email, timestamp: Date.now(), status: "offen"
                 });
-                alert("Gesendet!");
+                alert("Anfrage wurde gesendet!");
                 document.getElementById('req-title').value = ""; document.getElementById('req-msg').value = "";
-            } catch (e) { alert("Fehler"); }
+            } catch (e) { alert("Fehler beim Senden."); }
         };
     </script>
 </body>
