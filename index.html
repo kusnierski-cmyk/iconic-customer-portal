@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ICONIC | Customer Portal</title>
+    <title>ICONIC | Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -50,11 +50,11 @@
     <div id="auth-screen">
         <div class="auth-card">
             <h2 id="auth-title" style="font-family:'Rajdhani'; margin-bottom:25px; letter-spacing:2px;">ICONIC <span style="color:var(--cyan)">LOGIN</span></h2>
-            <input type="text" id="login-name" placeholder="Dein Firmenname">
+            <input type="text" id="login-name" placeholder="Dein Name/Firma">
             <input type="email" id="login-email" placeholder="E-Mail Adresse">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button class="btn" id="auth-btn" onclick="handleAuth()">Einloggen</button>
-            <p id="auth-toggle-text" class="toggle-auth" onclick="toggleAuthMode()">Noch kein Konto? Registrieren</p>
+            <p id="auth-toggle-text" class="toggle-auth" onclick="toggleAuthMode()">Registrieren</p>
             <p id="auth-error" style="color:var(--danger); font-size:0.8rem; margin-top:15px;"></p>
         </div>
     </div>
@@ -62,7 +62,7 @@
     <div id="portal-content" class="hidden">
         <div class="header">
             <h1>ICONIC <span>PORTAL</span></h1>
-            <button onclick="logout()" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fa-solid fa-power-off"></i></button>
+            <button onclick="logout()" style="background:none; border:none; color:var(--danger);"><i class="fa-solid fa-power-off"></i></button>
         </div>
 
         <div id="pulse-card" class="pulse-card">
@@ -72,15 +72,13 @@
         </div>
 
         <h3 class="section-title">Deine Historie</h3>
-        <div class="log-container" id="all-activities">
-            <p style="text-align:center; color:var(--gray); font-size:0.8rem;">Lade Daten...</p>
-        </div>
+        <div class="log-container" id="all-activities"></div>
 
-        <h3 class="section-title">Neue Anfrage</h3>
+        <h3 class="section-title">Anfrage</h3>
         <div class="request-box">
             <input type="text" id="req-title" placeholder="Betreff">
-            <textarea id="req-msg" rows="4" placeholder="Deine Nachricht..."></textarea>
-            <button class="btn" onclick="sendRequest()">Anfrage senden</button>
+            <textarea id="req-msg" rows="4" placeholder="Nachricht..."></textarea>
+            <button class="btn" onclick="sendRequest()">Senden</button>
         </div>
     </div>
 
@@ -102,16 +100,14 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const ADMIN_UID = "wn9blxkhF7UbSfv0gnqW3EDb1zx2"; 
+        const ADMIN_ID = "wn9blxkhF7UbSfv0gnqW3EDb1zx2"; 
         let isLoginMode = true;
 
         window.toggleAuthMode = () => {
             isLoginMode = !isLoginMode;
-            document.getElementById('auth-title').innerHTML = isLoginMode ? 'ICONIC <span style="color:var(--cyan)">LOGIN</span>' : 'ICONIC <span style="color:var(--cyan)">REGISTRIEREN</span>';
-            document.getElementById('auth-btn').innerText = isLoginMode ? 'Einloggen' : 'Registrieren';
+            document.getElementById('auth-title').innerHTML = isLoginMode ? 'ICONIC LOGIN' : 'ICONIC REGISTER';
             document.getElementById('login-name').style.display = isLoginMode ? 'none' : 'block';
         };
-
         document.getElementById('login-name').style.display = 'none';
 
         window.handleAuth = async () => {
@@ -119,9 +115,8 @@
             const email = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-pass').value;
             try {
-                if (isLoginMode) {
-                    await signInWithEmailAndPassword(auth, email, pass);
-                } else {
+                if (isLoginMode) { await signInWithEmailAndPassword(auth, email, pass); } 
+                else {
                     const res = await createUserWithEmailAndPassword(auth, email, pass);
                     await updateProfile(res.user, { displayName: name });
                 }
@@ -135,15 +130,14 @@
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('portal-content').classList.remove('hidden');
-                const activeName = user.displayName || user.email.split('@')[0];
-                startSync(activeName);
+                startSync(user.displayName || user.email.split('@')[0]);
             }
         });
 
         function startSync(name) {
-            const searchName = name.toLowerCase().trim();
+            const clientName = name.toLowerCase().trim();
 
-            // 1. LIVE STATUS (MULTI-USER)
+            // 1. LIVE STATUS
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
@@ -151,8 +145,9 @@
                 const projectDisplay = document.getElementById('live-project');
                 
                 if(data && data.active) {
-                    const p = data.partner?.toLowerCase().trim() || "";
-                    if(p === searchName || searchName.includes(p) || p.includes(searchName)) {
+                    const p = data.partner?.toLowerCase() || "";
+                    // Wenn der Partner-Eintrag im CRM "iconic" ODER den Namen des Users enthält
+                    if(p.includes("iconic") || p.includes(clientName) || clientName.includes(p)) {
                         card.classList.add('active');
                         label.innerText = "LIVE IN BEARBEITUNG";
                         projectDisplay.innerText = (data.project || "Projekt").toUpperCase();
@@ -164,42 +159,24 @@
                 projectDisplay.innerText = "BEREIT";
             });
 
-            // 2. HISTORIE (MULTI-USER)
-            const worklogRef = collection(db, "users", ADMIN_UID, "worklogs");
+            // 2. HISTORIE
+            const worklogRef = collection(db, "users", ADMIN_ID, "worklogs");
             onSnapshot(worklogRef, (snap) => {
                 const container = document.getElementById('all-activities');
-                if (snap.empty) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Daten vorhanden.</p>`;
-                    return;
-                }
-
-                let logs = snap.docs
-                    .map(d => d.data())
-                    .filter(l => {
-                        const p = l.partner?.toLowerCase().trim() || "";
-                        // Der Filter vergleicht den Partner-Eintrag aus deinem CRM mit dem Loginnamen
-                        return p !== "" && (p === searchName || searchName.includes(p) || p.includes(searchName));
-                    })
-                    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+                let logs = snap.docs.map(d => d.data()).filter(l => {
+                    const p = l.partner?.toLowerCase() || "";
+                    return p.includes("iconic") || p.includes(clientName) || clientName.includes(p);
+                }).sort((a,b) => (b.date || "").localeCompare(a.date || ""));
 
                 if (logs.length === 0) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Willkommen! Noch keine Aktivitäten für "${name}" gelistet.</p>`;
+                    container.innerHTML = `<p style="text-align:center; color:gray; padding:20px;">Noch keine Aktivitäten.</p>`;
                     return;
                 }
 
                 container.innerHTML = "";
                 logs.forEach(log => {
-                    const d = log.date ? log.date.split('-').reverse().join('.') : "Info";
-                    container.innerHTML += `
-                        <div class="log-card">
-                            <div>
-                                <div style="font-weight:600;">${log.project || 'Aufgabe'}</div>
-                                <div style="font-size:0.75rem; color:var(--gray);">${d}</div>
-                            </div>
-                            <div style="text-align:right">
-                                <div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div>
-                            </div>
-                        </div>`;
+                    let d = log.date ? log.date.split('-').reverse().join('.') : "Info";
+                    container.innerHTML += `<div class="log-card"><div><div style="font-weight:600;">${log.project}</div><div style="font-size:0.75rem; color:var(--gray);">${d}</div></div><div style="text-align:right"><div style="color:var(--cyan); font-weight:700;">${log.duration}</div></div></div>`;
                 });
             });
         }
@@ -208,13 +185,8 @@
             const title = document.getElementById('req-title').value;
             const msg = document.getElementById('req-msg').value;
             if(!title || !msg) return alert("Felder ausfüllen");
-            try {
-                await addDoc(collection(db, "requests"), {
-                    title, desc: msg, partner: auth.currentUser.displayName || auth.currentUser.email, timestamp: Date.now(), status: "offen"
-                });
-                alert("Anfrage wurde gesendet!");
-                document.getElementById('req-title').value = ""; document.getElementById('req-msg').value = "";
-            } catch (e) { alert("Fehler beim Senden."); }
+            await addDoc(collection(db, "requests"), { title, desc: msg, partner: auth.currentUser.displayName, timestamp: Date.now() });
+            alert("Senden erfolgreich!");
         };
     </script>
 </body>
