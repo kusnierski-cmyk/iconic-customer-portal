@@ -112,7 +112,7 @@
         import { getFirestore, doc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
+            apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0y0h4",
             authDomain: "iconic-visual-concepts-crm.firebaseapp.com",
             projectId: "iconic-visual-concepts-crm",
             storageBucket: "iconic-visual-concepts-crm.firebasestorage.app",
@@ -214,8 +214,9 @@
 
                     container.innerHTML += `
                         <div class="log-card">
-                            <div>
+                            <div style="flex: 1; padding-right: 15px;">
                                 <div style="font-weight:600;">${log.project || 'Aufgabe'}</div>
+                                <div style="font-size:0.75rem; color:var(--gray); margin-bottom: 5px;">${log.desc || ''}</div>
                                 <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">
                                     <i class="fa-regular fa-calendar"></i> ${d} | 
                                     <i class="fa-regular fa-clock"></i> Start: ${startTime} | 
