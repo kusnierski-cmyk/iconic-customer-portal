@@ -40,7 +40,7 @@
             <input type="email" id="email" placeholder="E-Mail" autocomplete="email">
             <input type="password" id="pass" placeholder="Passwort">
             <div id="register-fields" class="hidden">
-                <input type="text" id="reg-company" placeholder="Firmenname">
+                <input type="text" id="reg-company" placeholder="Firmenname (Exakt wie im CRM)">
                 <input type="password" id="pass2" placeholder="Passwort wiederholen">
             </div>
             <button class="btn-send" onclick="handleAuth()" id="auth-btn">Anmelden</button>
@@ -62,7 +62,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -77,7 +77,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // KORREKTUR: ADMIN_UID muss mit der ID im CRM übereinstimmen
         const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2"; 
         
         let userCompany = "";
@@ -117,6 +116,8 @@
                     if(!comp) throw new Error("Firmenname fehlt.");
                     const res = await createUserWithEmailAndPassword(auth, e, p);
                     await updateProfile(res.user, { displayName: comp });
+                    // Token neu laden, damit die Datenbank-Regeln den Namen sofort erkennen
+                    await res.user.getIdToken(true);
                     location.reload();
                 }
             } catch (error) { 
@@ -129,13 +130,18 @@
 
         onAuthStateChanged(auth, (user) => { if(user) showPortal(user); });
 
-        async function initPortal() {
-            // 1. LIVE STATUS
+        function initPortal() {
+            // 1. LIVE STATUS (ECHTZEIT)
             onSnapshot(doc(db, "global_status", "live"), (s) => {
                 const card = document.getElementById('status-card');
                 if(!s.exists()) return;
                 const d = s.data();
-                if(d.active && d.partner === userCompany) {
+                
+                // Ignoriert Groß-/Kleinschreibung beim Abgleich
+                const crmPartner = d.partner ? d.partner.trim().toLowerCase() : "";
+                const myCompany = userCompany ? userCompany.trim().toLowerCase() : "";
+
+                if(d.active && crmPartner === myCompany) {
                     card.classList.add('active');
                     document.getElementById('status-title').innerText = "LIVE IN PROGRESS";
                     document.getElementById('status-desc').innerText = "Bearbeitung: " + (d.project || "Aktiv");
@@ -144,22 +150,29 @@
                     document.getElementById('status-title').innerText = "SYSTEM STANDBY";
                     document.getElementById('status-desc').innerText = "Momentan keine aktive Bearbeitung.";
                 }
+            }, (error) => {
+                document.getElementById('status-desc').innerText = "Verbindungsfehler. Wird von Google blockiert (Falsche URL).";
             });
 
-            // 2. WORKLOGS & KALENDER
+            // 2. WORKLOGS & KALENDER (NEU: AUCH IN ECHTZEIT)
             try {
                 const q = query(
                     collection(db, "users", ADMIN_UID, "worklogs"),
                     where("partner", "==", userCompany)
                 );
                 
-                const snap = await getDocs(q);
-                const logs = snap.docs.map(d => d.data());
-                
-                renderStats(logs);
-                renderCalendar(logs);
+                // onSnapshot statt getDocs sorgt dafür, dass sich der Kalender sofort aktualisiert, 
+                // wenn du im CRM auf Stop drückst.
+                onSnapshot(q, (snap) => {
+                    const logs = snap.docs.map(d => d.data());
+                    renderStats(logs);
+                    renderCalendar(logs);
+                }, (err) => {
+                    console.error("Daten-Fehler:", err);
+                    document.getElementById('insight-main-project').innerText = "Keine Datenfreigabe";
+                });
             } catch (e) {
-                console.error("Daten-Fehler:", e);
+                console.error("Abfrage-Fehler:", e);
             }
         }
 
@@ -179,6 +192,8 @@
             if(logs.length > 0) {
                 const lastProject = logs[logs.length - 1].project;
                 document.getElementById('insight-main-project').innerText = lastProject || "Aktiv";
+            } else {
+                document.getElementById('insight-main-project').innerText = "Kein Projekt aktiv";
             }
         }
 
