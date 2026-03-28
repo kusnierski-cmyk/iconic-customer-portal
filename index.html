@@ -87,10 +87,10 @@
                 <div class="auth-tab active" onclick="toggleAuth('login')">LOGIN</div>
                 <div class="auth-tab" onclick="toggleAuth('register')">REGISTRIEREN</div>
             </div>
-            <div id="login-fields">
-                <input type="email" id="email" placeholder="E-Mail">
-                <input type="password" id="pass" placeholder="Passwort">
-            </div>
+            
+            <input type="email" id="email" placeholder="E-Mail">
+            <input type="password" id="pass" placeholder="Passwort">
+
             <div id="register-fields" class="hidden">
                 <input type="text" id="reg-company" placeholder="Firmenname (Exakt wie im CRM)">
                 <input type="password" id="pass2" placeholder="Passwort wiederholen">
@@ -98,6 +98,7 @@
                     <input type="checkbox" id="privacy" style="width: auto; margin: 0;"> Ich akzeptiere die Datenschutzbestimmungen
                 </label>
             </div>
+
             <button class="btn-send" onclick="handleAuth()" id="auth-btn">Anmelden</button>
             <p id="auth-error" style="color: var(--danger); font-size: 0.7rem; margin-top: 10px; text-align: center;"></p>
         </div>
@@ -166,21 +167,18 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // DEINE ADMIN-ID (Muss exakt mit deinem CRM übereinstimmen)
-        const ADMIN_UID = "689489453527"; 
+        // DEINE ADMIN-ID AUS DEM CRM
+        const ADMIN_UID = "689489453527";
 
         let userCompany = "";
         let workLogs = [];
         let authMode = 'login';
 
-        // --- AUTH LOGIC ---
         window.toggleAuth = (mode) => {
             authMode = mode;
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            const target = event ? event.target : null;
-            if(target) target.classList.add('active');
+            if(event) event.target.classList.add('active');
             
-            document.getElementById('login-fields').classList.toggle('hidden', mode === 'register');
             document.getElementById('register-fields').classList.toggle('hidden', mode === 'login');
             document.getElementById('auth-btn').innerText = mode === 'login' ? 'Anmelden' : 'Konto erstellen';
         };
@@ -189,6 +187,7 @@
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
             const err = document.getElementById('auth-error');
+            err.innerText = "";
 
             try {
                 if(authMode === 'login') {
@@ -220,9 +219,7 @@
             }
         });
 
-        // --- DATA LOGIC ---
         function initPortal() {
-            // Live Status Monitor
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('status-card');
@@ -236,39 +233,29 @@
                     document.getElementById('status-desc').innerText = "Keine aktive Bearbeitung.";
                 }
             });
-
             loadWorkLogs();
         }
 
         async function loadWorkLogs() {
-            try {
-                const q = query(collection(db, "users", ADMIN_UID, "worklogs"), where("partner", "==", userCompany));
-                const snap = await getDocs(q);
-                workLogs = snap.docs.map(d => d.data());
-                renderCalendar();
-                renderInsights();
-            } catch (e) {
-                console.error("Fehler beim Laden der Logs:", e);
-            }
+            const q = query(collection(db, "users", ADMIN_UID, "worklogs"), where("partner", "==", userCompany));
+            const snap = await getDocs(q);
+            workLogs = snap.docs.map(d => d.data());
+            renderCalendar();
+            renderInsights();
         }
 
         function renderInsights() {
             const currentMonth = new Date().getMonth();
             const monthlyLogs = workLogs.filter(l => l.date && new Date(l.date).getMonth() === currentMonth);
-            
             document.getElementById('insight-days').innerText = new Set(monthlyLogs.map(l => l.date)).size;
-            
             const totalHours = monthlyLogs.reduce((acc, l) => {
                 if(!l.duration) return acc;
                 const parts = l.duration.split(':');
                 return acc + parseInt(parts[0]) + (parseInt(parts[1])/60);
             }, 0);
             document.getElementById('insight-hours').innerText = totalHours.toFixed(1) + "h";
-
             const projects = {};
-            monthlyLogs.forEach(l => {
-                if(l.project) projects[l.project] = (projects[l.project] || 0) + 1;
-            });
+            monthlyLogs.forEach(l => projects[l.project] = (projects[l.project] || 0) + 1);
             const main = Object.keys(projects).length > 0 ? Object.keys(projects).reduce((a, b) => projects[a] > projects[b] ? a : b) : "Kein Fokus";
             document.getElementById('insight-main-project').innerText = main;
         }
@@ -286,7 +273,7 @@
                 if(hasWork) day.onclick = () => showDay(dateStr, day);
                 grid.appendChild(day);
             }
-        }
+        };
 
         window.showDay = (dateStr, el) => {
             document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('active-sel'));
@@ -296,28 +283,24 @@
             document.getElementById('selected-date').innerText = "BERICHT " + new Date(dateStr).toLocaleDateString('de-DE');
             document.getElementById('log-list').innerHTML = logs.map(l => `
                 <div class="log-card">
-                    <strong>${l.project || 'Projekt'}</strong><br>
-                    <span style="font-size:0.7rem; color:var(--gray)">Dauer: ${l.duration || '--'}</span>
+                    <strong>${l.project}</strong><br>
+                    <span style="font-size:0.7rem; color:var(--gray)">Dauer: ${l.duration}</span>
                 </div>
             `).join('');
-        }
+        };
 
         window.sendRequest = async () => {
             const t = document.getElementById('req-title').value;
             const d = document.getElementById('req-desc').value;
             if(!t || !d) return alert("Bitte ausfüllen.");
-            try {
-                await addDoc(collection(db, "requests"), { 
-                    title: t, 
-                    desc: d, 
-                    partner: userCompany, 
-                    timestamp: Date.now() 
-                });
-                alert("Anfrage gesendet!");
-                document.getElementById('req-title').value = ""; document.getElementById('req-desc').value = "";
-            } catch (e) {
-                alert("Fehler beim Senden: " + e.message);
-            }
+            await addDoc(collection(db, "requests"), { 
+                title: t, 
+                desc: d, 
+                partner: userCompany, 
+                timestamp: Date.now() 
+            });
+            alert("Anfrage gesendet!");
+            document.getElementById('req-title').value = ""; document.getElementById('req-desc').value = "";
         };
     </script>
 </body>
