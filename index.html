@@ -33,9 +33,7 @@
         .log-card { 
             background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; 
             border-left: 4px solid var(--cyan); display: flex; justify-content: space-between; align-items: center;
-            animation: fadeIn 0.5s ease-in-out;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .request-box { background: var(--panel); margin: 0 20px 50px; padding: 25px; border-radius: 20px; border: 1px solid rgba(0,206,209,0.1); }
         input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-family: inherit; outline: none; }
@@ -51,6 +49,7 @@
     <div id="auth-screen">
         <div class="auth-card">
             <h2 style="font-family:'Rajdhani'; margin-bottom:25px; letter-spacing:2px;">ICONIC <span style="color:var(--cyan)">PORTAL</span></h2>
+            <input type="text" id="login-name" placeholder="Vollständiger Name (CRM Name)">
             <input type="email" id="login-email" placeholder="E-Mail Adresse">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button class="btn" onclick="handleAuth()">Einloggen</button>
@@ -86,8 +85,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -105,10 +104,25 @@
         const ADMIN_UID = "69oYfCidK8MOfT9l9Kshh0U6VpS2"; 
 
         window.handleAuth = async () => {
-            const email = document.getElementById('login-email').value;
+            const name = document.getElementById('login-name').value.trim();
+            const email = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-pass').value;
-            try { await signInWithEmailAndPassword(auth, email, pass); } 
-            catch (e) { document.getElementById('auth-error').innerText = "Fehler beim Login."; }
+
+            if(!name || !email || !pass) {
+                document.getElementById('auth-error').innerText = "Bitte alle Felder ausfüllen.";
+                return;
+            }
+
+            try { 
+                const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+                // WICHTIG: Wir speichern den eingegebenen Namen im Profil, falls er noch nicht da ist
+                // So erkennt das System beim nächsten Sync sofort den richtigen Namen.
+                await updateProfile(userCredential.user, { displayName: name });
+                // Seite wird durch onAuthStateChanged aktualisiert
+            } 
+            catch (e) { 
+                document.getElementById('auth-error').innerText = "Login fehlgeschlagen. Daten prüfen."; 
+            }
         };
 
         window.logout = () => signOut(auth).then(() => location.reload());
@@ -117,20 +131,22 @@
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('portal-content').classList.remove('hidden');
-                // Nutze den Display Namen (registrierter Kundenname)
-                const clientName = user.displayName || "Unbekannter Kunde";
-                startSync(clientName);
+                // Er nimmt jetzt den fest hinterlegten Namen aus dem Auth-Profil
+                startSync(user.displayName);
             }
         });
 
-        function startSync(name) {
-            const cleanName = name.toLowerCase().trim();
+        function startSync(clientName) {
+            if(!clientName) return;
+            const cleanName = clientName.toLowerCase().trim();
 
-            // 1. LIVE STATUS SYNC
+            // 1. LIVE STATUS
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
-                if(data && data.active && data.partner && data.partner.toLowerCase().trim() === cleanName) {
+                const crmPartner = data?.partner ? data.partner.toLowerCase().trim() : "";
+
+                if(data && data.active && crmPartner === cleanName) {
                     card.classList.add('active');
                     document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
                     document.getElementById('live-project').innerText = data.project.toUpperCase();
@@ -143,26 +159,23 @@
                 }
             });
 
-            // 2. AKTIVITÄTEN SYNC (CRM-Format Support)
+            // 2. AKTIVITÄTEN
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
                 const container = document.getElementById('all-activities');
-                container.innerHTML = "";
-                
                 let logs = snap.docs.map(d => d.data());
+
                 const filtered = logs.filter(l => l.partner && l.partner.toLowerCase().trim() === cleanName);
-                
-                // Sortierung nach Datum (Text-Format YYYY-MM-DD ist direkt sortierbar)
                 filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
                 if(filtered.length === 0) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Aktivitäten für "${name}" gefunden.</p>`;
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Aktivitäten für "${clientName}" gefunden.</p>`;
                     return;
                 }
 
+                container.innerHTML = "";
                 filtered.forEach(log => {
-                    // Datum schön formatieren (von YYYY-MM-DD zu DD.MM.YYYY)
-                    const dateParts = log.date ? log.date.split('-') : [];
-                    const displayDate = dateParts.length === 3 ? `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}` : "Datum unbekannt";
+                    const d = log.date ? log.date.split('-') : [];
+                    const displayDate = d.length === 3 ? `${d[2]}.${d[1]}.${d[0]}` : "Datum unbekannt";
 
                     container.innerHTML += `
                         <div class="log-card">
@@ -171,7 +184,7 @@
                                 <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">${displayDate}</div>
                             </div>
                             <div style="text-align:right">
-                                <div style="font-family:'Rajdhani'; font-weight:700; color:var(--cyan); font-size:1.1rem;">${log.duration}h</div>
+                                <div style="font-family:'Rajdhani'; font-weight:700; color:var(--cyan); font-size:1.1rem;">${log.duration || '0'}h</div>
                                 <div style="font-size:0.6rem; color:var(--gray); text-transform:uppercase;">Arbeitszeit</div>
                             </div>
                         </div>`;
@@ -182,24 +195,23 @@
         window.sendRequest = async () => {
             const title = document.getElementById('req-title').value;
             const msg = document.getElementById('req-msg').value;
-            if(!auth.currentUser) return alert("Bitte logge dich erneut ein.");
-            const clientName = auth.currentUser.displayName || "Unbekannter Kunde";
-
-            if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
+            if(!auth.currentUser) return;
+            
+            if(!title || !msg) return alert("Felder ausfüllen.");
 
             try {
                 await addDoc(collection(db, "requests"), {
                     title: title,
                     desc: msg,
-                    partner: clientName,
+                    partner: auth.currentUser.displayName,
                     timestamp: Date.now(),
                     status: "offen"
                 });
-                alert("Anfrage wurde gesendet!");
+                alert("Anfrage gesendet!");
                 document.getElementById('req-title').value = "";
                 document.getElementById('req-msg').value = "";
             } catch (e) {
-                alert("Fehler beim Senden.");
+                alert("Fehler.");
             }
         };
     </script>
