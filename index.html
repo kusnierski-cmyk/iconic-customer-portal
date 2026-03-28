@@ -8,46 +8,83 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; }
-        body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
-        .hidden { display: none; }
-        .header { font-family: 'Rajdhani'; font-size: 1.5rem; margin-bottom: 30px; border-bottom: 1px solid rgba(0,206,209,0.3); padding-bottom: 15px; }
-        .status-card { background: var(--panel); border-radius: 20px; padding: 40px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center; }
-        .status-card.active { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 206, 209, 0.2); }
-        .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
-        .insight-card { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.03); text-align: center; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 15px; border-radius: 15px; margin-bottom: 20px; }
-        .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border-radius: 6px; background: #080808; color: #333; }
-        .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); background: rgba(0,206,209,0.1); }
-        .log-item { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--cyan); font-size: 0.85rem; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; padding-top: 70px; }
+        .hidden { display: none !important; }
+
+        /* Header */
+        .header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(5,5,5,0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 1000; border-bottom: 1px solid rgba(0,206,209,0.2); }
+        .header h1 { font-family: 'Rajdhani'; font-size: 1.2rem; letter-spacing: 2px; margin: 0; }
+        .header span { color: var(--cyan); }
+        .logout-btn { background: none; border: none; color: #ff4444; font-size: 1.2rem; cursor: pointer; }
+
+        /* Status */
+        .status-card { background: var(--panel); border-radius: 20px; padding: 30px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; text-align: center; }
+        .status-card.active { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 206, 209, 0.2); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .status-card h2 { font-family: 'Rajdhani'; font-size: 1.4rem; margin: 0 0 5px 0; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stat-box { background: var(--panel); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.03); }
+        .stat-val { display: block; color: var(--cyan); font-weight: 700; font-size: 1.4rem; font-family: 'Rajdhani'; }
+        .stat-label { font-size: 0.7rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Kalender */
+        .calendar-section { background: var(--panel); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.03); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border-radius: 8px; background: #000; color: #333; transition: 0.3s; }
+        .cal-day.worked { background: rgba(0, 206, 209, 0.15); color: var(--cyan); border: 1px solid var(--cyan); box-shadow: 0 0 10px rgba(0, 206, 209, 0.3); font-weight: bold; }
+
+        /* Form */
+        .form-area { background: var(--panel); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.03); }
+        input, textarea { width: 100%; background: #000; border: 1px solid #222; color: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; font-family: inherit; outline: none; }
+        input:focus { border-color: var(--cyan); }
+        .btn-send { width: 100%; background: var(--cyan); color: #000; border: none; padding: 16px; border-radius: 10px; font-weight: 700; font-family: 'Rajdhani'; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
 <body>
-    <div id="auth-overlay" style="padding: 20px; text-align: center;">
-        <h2 style="font-family:'Rajdhani'; margin-bottom:20px;">PORTAL LOGIN</h2>
-        <input type="email" id="email" placeholder="E-Mail" style="width:100%; padding:12px; margin-bottom:10px; background:#111; border:1px solid #333; color:#fff;">
-        <input type="password" id="pass" placeholder="Passwort" style="width:100%; padding:12px; margin-bottom:20px; background:#111; border:1px solid #333; color:#fff;">
-        <button onclick="handleAuth()" style="width:100%; padding:15px; background:var(--cyan); border:none; font-weight:bold; cursor:pointer;">ANMELDEN</button>
+
+    <div id="nav-header" class="header hidden">
+        <h1>ICONIC <span>PORTAL</span></h1>
+        <button class="logout-btn" onclick="auth.signOut()"><i class="fa-solid fa-power-off"></i></button>
+    </div>
+
+    <div id="auth-overlay" style="max-width: 350px; margin: 100px auto; text-align: center;">
+        <h2 style="font-family:'Rajdhani'; color:var(--cyan);">ACCESS</h2>
+        <input type="email" id="email" placeholder="E-Mail">
+        <input type="password" id="pass" placeholder="Passwort">
+        <button onclick="handleAuth()" class="btn-send">Login</button>
     </div>
 
     <div id="main-content" class="hidden">
-        <div class="header">ICONIC <span>PORTAL</span></div>
         <div id="status-card" class="status-card">
             <h2 id="status-title">SYSTEM STANDBY</h2>
-            <p id="status-desc">Bereit für neue Aufgaben.</p>
+            <p id="status-desc" style="font-size: 0.8rem; color: var(--gray);">Bereit für neue Aufgaben.</p>
         </div>
-        <div class="insights-grid">
-            <div class="insight-card" style="grid-column: span 2;"><span id="insight-main-project">Kein aktives Projekt</span></div>
-            <div class="insight-card"><span id="insight-days" style="color:var(--cyan); font-weight:bold;">0</span> Tage</div>
-            <div class="insight-card"><span id="insight-hours" style="color:var(--cyan); font-weight:bold;">0h</span> Zeit</div>
+
+        <div class="stats-grid">
+            <div class="stat-box"><span id="insight-days" class="stat-val">0</span><span class="stat-label">Tage aktiv</span></div>
+            <div class="stat-box"><span id="insight-hours" class="stat-val">0.0h</span><span class="stat-label">Gesamtzeit</span></div>
         </div>
-        <div class="calendar-grid" id="calendar"></div>
-        <div id="log-details"></div>
+
+        <div class="calendar-section">
+            <h3 style="font-family:'Rajdhani'; font-size:1rem; margin-top:0; margin-bottom:15px; color:var(--gray);">AKTIVITÄTS-KALENDER</h3>
+            <div id="calendar" class="calendar-grid"></div>
+        </div>
+
+        <div class="form-area">
+            <h3 style="font-family:'Rajdhani'; margin-top:0; color:var(--cyan);">NEUE ANFRAGE</h3>
+            <input type="text" id="req-title" placeholder="Projekt / Betreff">
+            <textarea id="req-desc" rows="3" placeholder="Wie kann ich helfen?"></textarea>
+            <button onclick="sendRequest()" class="btn-send">Senden</button>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -61,28 +98,33 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
         const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2";
-        const normalize = (str) => str ? str.toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim() : "";
+
+        const normalize = (s) => s ? s.toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim() : "";
 
         window.handleAuth = () => {
             const e = document.getElementById('email').value;
             const p = document.getElementById('pass').value;
-            signInWithEmailAndPassword(auth, e, p).catch(err => alert("Login Fehler"));
+            signInWithEmailAndPassword(auth, e, p).catch(err => alert("Fehler: " + err.message));
         };
 
         onAuthStateChanged(auth, (user) => {
             if(user) {
                 document.getElementById('auth-overlay').classList.add('hidden');
+                document.getElementById('nav-header').classList.remove('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
                 initPortal(user.displayName || "Kunde");
+            } else {
+                document.getElementById('auth-overlay').classList.remove('hidden');
+                document.getElementById('nav-header').classList.add('hidden');
+                document.getElementById('main-content').classList.add('hidden');
             }
         });
 
         function initPortal(userName) {
             const userKey = normalize(userName);
 
-            // 1. Live Status
+            // 1. Live-Status Sync
             onSnapshot(doc(db, "global_status", "live"), (s) => {
                 const card = document.getElementById('status-card');
                 if(s.exists() && s.data().active && normalize(s.data().partner) === userKey) {
@@ -92,44 +134,74 @@
                 } else {
                     card.classList.remove('active');
                     document.getElementById('status-title').innerText = "SYSTEM STANDBY";
+                    document.getElementById('status-desc').innerText = "Bereit für neue Aufgaben.";
                 }
             });
 
-            // 2. Worklogs & Kalender
+            // 2. Worklogs & Stats & Kalender
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
                 const logs = snap.docs.map(d => d.data()).filter(l => normalize(l.partner) === userKey);
                 
-                // Kalender immer zeichnen
-                renderCalendar(logs);
-                
-                // Stats füllen
+                // Tage zählen
                 const uniqueDays = new Set(logs.map(l => l.date)).size;
                 document.getElementById('insight-days').innerText = uniqueDays;
                 
-                let totalMin = 0;
+                // Stunden berechnen (auch Sekunden zählen)
+                let totalSeconds = 0;
                 logs.forEach(l => {
-                    const parts = (l.duration || "0:0").split(':');
-                    totalMin += (parseInt(parts[0]) * 60) + parseInt(parts[1]);
+                    const p = (l.duration || "0:0:0").split(':').map(Number);
+                    if(p.length === 3) totalSeconds += (p[0] * 3600) + (p[1] * 60) + p[2];
+                    else if(p.length === 2) totalSeconds += (p[0] * 60) + p[1];
                 });
-                document.getElementById('insight-hours').innerText = (totalMin / 60).toFixed(1) + "h";
-                if(logs.length > 0) document.getElementById('insight-main-project').innerText = logs[0].project;
+                document.getElementById('insight-hours').innerText = (totalSeconds / 3600).toFixed(2) + "h";
+
+                // Kalender bauen
+                renderCalendar(logs);
             });
         }
 
         function renderCalendar(logs) {
             const grid = document.getElementById('calendar');
             grid.innerHTML = "";
-            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-            const workedDates = logs.map(l => l.date);
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Hole alle gearbeiteten Tage in verschiedenen Formaten
+            const workedDates = logs.map(l => {
+                // Konvertiere deutsches "28.3.2026" zu "2026-03-28" für den Vergleich
+                if(l.date && l.date.includes('.')) {
+                    const parts = l.date.split('.');
+                    return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                }
+                return l.date; // Falls es schon ISO ist
+            });
 
             for(let i = 1; i <= daysInMonth; i++) {
-                const dayStr = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
-                const div = document.createElement('div');
-                div.className = 'cal-day' + (workedDates.includes(dayStr) ? ' worked' : '');
-                div.innerText = i;
-                grid.appendChild(div);
+                const currentStr = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+                const day = document.createElement('div');
+                day.className = 'cal-day' + (workedDates.includes(currentStr) ? ' worked' : '');
+                day.innerText = i;
+                grid.appendChild(day);
             }
         }
+
+        window.sendRequest = async () => {
+            const t = document.getElementById('req-title').value;
+            const d = document.getElementById('req-desc').value;
+            if(!t || !d) return alert("Bitte fülle beide Felder aus.");
+            
+            await addDoc(collection(db, "requests"), {
+                title: t,
+                desc: d,
+                partner: auth.currentUser.displayName || "Kunde",
+                timestamp: Date.now()
+            });
+            alert("Anfrage wurde übermittelt!");
+            document.getElementById('req-title').value = "";
+            document.getElementById('req-desc').value = "";
+        };
     </script>
 </body>
 </html>
