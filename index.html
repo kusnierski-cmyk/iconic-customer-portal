@@ -50,14 +50,10 @@
     <div id="auth-screen">
         <div class="auth-card">
             <h2 id="auth-title" style="font-family:'Rajdhani'; margin-bottom:25px; letter-spacing:2px;">ICONIC <span style="color:var(--cyan)">LOGIN</span></h2>
-            
             <input type="text" id="login-name" placeholder="Vollständiger Name (für CRM)">
-            
             <input type="email" id="login-email" placeholder="E-Mail Adresse">
             <input type="password" id="login-pass" placeholder="Passwort">
-            
             <button class="btn" id="auth-btn" onclick="handleAuth()">Einloggen</button>
-            
             <p id="auth-toggle-text" class="toggle-auth" onclick="toggleAuthMode()">Noch kein Konto? Jetzt registrieren</p>
             <p id="auth-error" style="color:var(--danger); font-size:0.8rem; margin-top:15px;"></p>
         </div>
@@ -118,7 +114,6 @@
             document.getElementById('login-name').style.display = isLoginMode ? 'none' : 'block';
         };
 
-        // Initialzustand Name-Feld ausblenden
         document.getElementById('login-name').style.display = 'none';
 
         window.handleAuth = async () => {
@@ -158,6 +153,7 @@
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
                 const crmPartner = data?.partner ? data.partner.toLowerCase().trim() : "";
+                
                 if(data && data.active && (crmPartner === cleanName || cleanName.includes(crmPartner))) {
                     card.classList.add('active');
                     document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
@@ -172,6 +168,11 @@
             const worklogRef = collection(db, "users", ADMIN_UID, "worklogs");
             onSnapshot(worklogRef, (snap) => {
                 const container = document.getElementById('all-activities');
+                if (snap.empty) {
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Daten vorhanden.</p>`;
+                    return;
+                }
+
                 let logs = snap.docs.map(d => d.data());
                 const filtered = logs.filter(l => l.partner && l.partner.toLowerCase().trim() === cleanName);
                 filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
@@ -188,6 +189,31 @@
                 });
             });
         }
+
+        // DIESE FUNKTION WAR AUSSERHALB - JETZT IST SIE DRIN
+        window.sendRequest = async () => {
+            const title = document.getElementById('req-title').value;
+            const msg = document.getElementById('req-msg').value;
+            const activeName = auth.currentUser ? auth.currentUser.displayName : "Unbekannter Kunde";
+            
+            if(!title || !msg) return alert("Bitte alle Felder ausfüllen.");
+
+            try {
+                await addDoc(collection(db, "requests"), {
+                    title: title,
+                    desc: msg,
+                    partner: activeName,
+                    timestamp: Date.now(),
+                    status: "offen"
+                });
+                alert("Anfrage erfolgreich gesendet!");
+                document.getElementById('req-title').value = "";
+                document.getElementById('req-msg').value = "";
+            } catch (e) { 
+                console.error(e);
+                alert("Fehler beim Senden. Bitte Firebase-Regeln prüfen."); 
+            }
+        };
     </script>
 </body>
 </html>
