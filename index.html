@@ -3,92 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ICONIC | Customer Portal</title>
+    <title>ICONIC | Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; min-height: 100vh; }
         .hidden { display: none !important; }
-
-        .header { height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: rgba(17,17,17,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,206,209,0.1); }
+        .header { height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: #111; border-bottom: 1px solid rgba(0,206,209,0.1); }
         .header h1 { font-family: 'Rajdhani'; font-size: 1.5rem; letter-spacing: 2px; }
         .header span { color: var(--cyan); }
-
-        .pulse-card { 
-            background: linear-gradient(135deg, #111 0%, #080808 100%);
-            border-radius: 20px; padding: 30px; text-align: center; margin: 20px;
-            position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);
-        }
-        .pulse-card.active { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 206, 209, 0.2); }
+        .pulse-card { background: #111; border-radius: 20px; padding: 30px; text-align: center; margin: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .pulse-card.active { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 206, 209, 0.2); }
         .active-pulse { display: none; width: 12px; height: 12px; background: var(--cyan); border-radius: 50%; margin: 0 auto 10px; }
         .active .active-pulse { display: block; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 206, 209, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 206, 209, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 206, 209, 0); } }
-
-        .section-title { font-family: 'Rajdhani'; font-size: 1.2rem; color: var(--gray); margin: 30px 20px 15px; text-transform: uppercase; letter-spacing: 1px; }
-        
+        .section-title { font-family: 'Rajdhani'; font-size: 1.2rem; color: var(--gray); margin: 30px 20px 15px; text-transform: uppercase; }
         .log-container { padding: 0 20px; }
-        .log-card { 
-            background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; 
-            border-left: 4px solid var(--cyan); display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .request-box { background: var(--panel); margin: 0 20px 50px; padding: 25px; border-radius: 20px; border: 1px solid rgba(0,206,209,0.1); }
-        input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-family: inherit; outline: none; }
-        input:focus, textarea:focus { border-color: var(--cyan); }
-        .btn { width: 100%; background: var(--cyan); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; font-family: 'Rajdhani'; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; }
-
-        #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 10000; }
-        .auth-card { background: var(--panel); padding: 40px; border-radius: 20px; border: 1px solid var(--cyan); width: 90%; max-width: 380px; text-align: center; }
-        .toggle-auth { color: var(--cyan); font-size: 0.8rem; margin-top: 15px; cursor: pointer; text-decoration: underline; }
+        .log-card { background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; border-left: 4px solid var(--cyan); display: flex; justify-content: space-between; align-items: center; }
+        input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .btn { width: 100%; background: var(--cyan); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; font-family: 'Rajdhani'; }
+        #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; position: fixed; width: 100%; z-index: 10000; background: var(--bg); }
+        .auth-card { background: var(--panel); padding: 30px; border-radius: 20px; width: 90%; text-align: center; border: 1px solid var(--cyan); }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
         <div class="auth-card">
-            <h2 id="auth-title" style="font-family:'Rajdhani'; margin-bottom:25px; letter-spacing:2px;">ICONIC <span style="color:var(--cyan)">LOGIN</span></h2>
-            <input type="text" id="login-name" placeholder="Vollständiger Name (für CRM)">
-            <input type="email" id="login-email" placeholder="E-Mail Adresse">
+            <h2 id="auth-title" style="font-family:'Rajdhani'; margin-bottom:20px;">ICONIC LOGIN</h2>
+            <input type="email" id="login-email" placeholder="E-Mail">
             <input type="password" id="login-pass" placeholder="Passwort">
-            <button class="btn" id="auth-btn" onclick="handleAuth()">Einloggen</button>
-            <p id="auth-toggle-text" class="toggle-auth" onclick="toggleAuthMode()">Noch kein Konto? Jetzt registrieren</p>
-            <p id="auth-error" style="color:var(--danger); font-size:0.8rem; margin-top:15px;"></p>
+            <button class="btn" onclick="handleAuth()">Einloggen</button>
+            <p id="auth-error" style="color:var(--danger); margin-top:15px; font-size:0.8rem;"></p>
         </div>
     </div>
 
     <div id="portal-content" class="hidden">
-        <div class="header">
-            <h1>ICONIC <span>PORTAL</span></h1>
-            <button onclick="logout()" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fa-solid fa-power-off"></i></button>
-        </div>
-
-        <div id="pulse-card" class="pulse-card">
-            <div class="active-pulse"></div>
-            <h4 id="live-label" style="font-family:'Rajdhani'; color:var(--gray); letter-spacing:2px;">SYSTEM STANDBY</h4>
-            <h2 id="live-project" style="font-family:'Rajdhani'; font-size:1.8rem; margin:10px 0;">BEREIT</h2>
-            <p id="live-desc" style="font-size:0.8rem; color:var(--gray);">Keine aktive Bearbeitung.</p>
-        </div>
-
-        <h3 class="section-title">Aktivitäten & Historie</h3>
-        <div class="log-container" id="all-activities">
-            <p style="text-align:center; color:var(--gray); font-size:0.8rem;">Suche Aktivitäten...</p>
-        </div>
-
-        <h3 class="section-title">Neue Anfrage</h3>
-        <div class="request-box">
-            <input type="text" id="req-title" placeholder="Betreff">
-            <textarea id="req-msg" rows="4" placeholder="Deine Nachricht..."></textarea>
-            <button class="btn" onclick="sendRequest()">Anfrage senden</button>
-        </div>
+        <div class="header"><h1>ICONIC <span>PORTAL</span></h1><button onclick="logout()" style="background:none; border:none; color:var(--danger);"><i class="fa-solid fa-power-off"></i></button></div>
+        <div id="pulse-card" class="pulse-card"><div class="active-pulse"></div><h4 id="live-label" style="color:var(--gray);">SYSTEM STANDBY</h4><h2 id="live-project">BEREIT</h2></div>
+        <h3 class="section-title">Aktivitäten</h3>
+        <div class="log-container" id="all-activities"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -103,71 +65,32 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const ADMIN_UID = "Wn9blxkhF7UbSfv0gnqW3EDb1zx2"; 
-        let isLoginMode = true;
-
-        window.toggleAuthMode = () => {
-            isLoginMode = !isLoginMode;
-            document.getElementById('auth-title').innerHTML = isLoginMode ? 'ICONIC <span style="color:var(--cyan)">LOGIN</span>' : 'ICONIC <span style="color:var(--cyan)">REGISTRIEREN</span>';
-            document.getElementById('auth-btn').innerText = isLoginMode ? 'Einloggen' : 'Konto erstellen';
-            document.getElementById('auth-toggle-text').innerText = isLoginMode ? 'Noch kein Konto? Jetzt registrieren' : 'Bereits ein Konto? Zum Login';
-            document.getElementById('login-name').style.display = isLoginMode ? 'none' : 'block';
-        };
-
-        document.getElementById('login-name').style.display = 'none';
+        // DIE ID AUS DEINEM SCREENSHOT (Exakt abgetippt)
+        const ADMIN_UID = "Wn9blxkhF7UbSfv0gnqW3EDb1zx2";
 
         window.handleAuth = async () => {
-            const name = document.getElementById('login-name').value.trim();
-            const email = document.getElementById('login-email').value.trim();
+            const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-
-            try {
-                if (isLoginMode) {
-                    await signInWithEmailAndPassword(auth, email, pass);
-                } else {
-                    if(!name) throw new Error("Name fehlt");
-                    const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-                    await updateProfile(userCred.user, { displayName: name });
-                }
-                location.reload();
-            } catch (e) {
-                document.getElementById('auth-error').innerText = "Fehler: " + e.message;
-            }
+            try { await signInWithEmailAndPassword(auth, email, pass); } 
+            catch (e) { document.getElementById('auth-error').innerText = "Fehler: " + e.message; }
         };
 
         window.logout = () => signOut(auth).then(() => location.reload());
 
-        // --- AUTH STATUS CHANGE MIT FEHLERSCHUTZ ---
         onAuthStateChanged(auth, (user) => {
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('portal-content').classList.remove('hidden');
-                
-                // Name aus Profil holen oder aus Email generieren
-                let nameToUse = user.displayName;
-                if (!nameToUse || nameToUse.trim() === "") {
-                    nameToUse = user.email.split('@')[0];
-                }
-
-                // Debugging-Alerts (kannst du später löschen)
-                console.log("Eingeloggter User:", nameToUse);
-                
-                startSync(nameToUse);
+                startSync();
             }
         });
 
-        function startSync(clientName) {
-            if(!clientName) return;
-            const portalName = clientName.toLowerCase().trim();
-            const cleanNameForPulse = portalName.replace(/\s/g, '');
-
-            // 1. LIVE PULSE SYNC
+        function startSync() {
+            // 1. LIVE STATUS
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
-                const crmPartner = data?.partner ? data.partner.toLowerCase().replace(/\s/g, '') : "";
-                
-                if(data && data.active && (crmPartner === cleanNameForPulse || cleanNameForPulse.includes(crmPartner) || crmPartner.includes("iconic"))) {
+                if(data && data.active && data.partner?.toLowerCase().includes("iconic")) {
                     card.classList.add('active');
                     document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
                     document.getElementById('live-project').innerText = (data.project || "Projekt").toUpperCase();
@@ -178,72 +101,32 @@
                 }
             });
 
-            // 2. HISTORIE SYNC MIT LOCKEREM FILTER
+            // 2. HISTORIE (Direkter Zugriff ohne Namens-Filter für dich zum Testen)
             const worklogRef = collection(db, "users", ADMIN_UID, "worklogs");
             onSnapshot(worklogRef, (snap) => {
                 const container = document.getElementById('all-activities');
-                
                 if (snap.empty) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Daten in 'worklogs' gefunden.</p>`;
+                    container.innerHTML = "<p style='text-align:center; color:gray;'>Keine Daten gefunden.</p>";
                     return;
                 }
 
-                let filtered = snap.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(log => {
-                        if (!log.partner) return false;
-                        const logPartner = log.partner.toLowerCase().trim();
-                        // Findet alles, was "iconic" im Namen hat oder zum Portal-Namen passt
-                        return logPartner.includes("iconic") || portalName.includes(logPartner) || logPartner.includes(portalName);
-                    });
-
-                filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-
-                if (filtered.length === 0) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Aktivitäten für "${clientName}" gefunden.</p>`;
-                    return;
-                }
-
+                // Wir zeigen JETZT einfach ALLES an, was in deinem worklogs Ordner liegt
+                // Wenn das klappt, wissen wir, dass die Verbindung 100% steht.
                 container.innerHTML = "";
-                filtered.forEach(log => {
-                    let displayDate = log.date ? log.date.split('-').reverse().join('.') : "Info";
+                snap.docs.forEach(doc => {
+                    const log = doc.data();
+                    let d = log.date ? log.date.split('-').reverse().join('.') : "Info";
                     container.innerHTML += `
                         <div class="log-card">
                             <div>
                                 <div style="font-weight:600;">${log.project || 'Aufgabe'}</div>
-                                <div style="font-size:0.75rem; color:var(--gray);">${displayDate}</div>
+                                <div style="font-size:0.75rem; color:var(--gray);">${d} | Partner: ${log.partner || 'Unbekannt'}</div>
                             </div>
-                            <div style="text-align:right">
-                                <div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div>
-                            </div>
+                            <div style="text-align:right"><div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div></div>
                         </div>`;
                 });
             });
         }
-
-        window.sendRequest = async () => {
-            const title = document.getElementById('req-title').value;
-            const msg = document.getElementById('req-msg').value;
-            const activeName = auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email) : "Unbekannter Kunde";
-            
-            if(!title || !msg) return alert("Bitte alle Felder ausfüllen.");
-
-            try {
-                await addDoc(collection(db, "requests"), {
-                    title: title,
-                    desc: msg,
-                    partner: activeName,
-                    timestamp: Date.now(),
-                    status: "offen"
-                });
-                alert("Anfrage erfolgreich gesendet!");
-                document.getElementById('req-title').value = "";
-                document.getElementById('req-msg').value = "";
-            } catch (e) { 
-                console.error(e);
-                alert("Fehler beim Senden."); 
-            }
-        };
     </script>
 </body>
 </html>
