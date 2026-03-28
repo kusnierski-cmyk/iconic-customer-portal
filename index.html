@@ -103,7 +103,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // AKTUALISIERTE ADMIN-UID (entspricht deinem CRM-Login)
+        // Deine Admin-UID (kleingeschrieben wie im DB-Pfad ersichtlich)
         const ADMIN_UID = "Wn9blxkhF7UbSfv0gnqW3EDb1zx2"; 
         let isLoginMode = true;
 
@@ -148,14 +148,16 @@
 
         function startSync(clientName) {
             if(!clientName) return;
-            const cleanName = clientName.toLowerCase().replace(/\s/g, '');
+            const portalName = clientName.toLowerCase().trim();
+            const cleanNameForPulse = portalName.replace(/\s/g, '');
 
+            // 1. LIVE PULSE SYNC
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
                 const crmPartner = data?.partner ? data.partner.toLowerCase().replace(/\s/g, '') : "";
                 
-                if(data && data.active && (crmPartner === cleanName || cleanName.includes(crmPartner))) {
+                if(data && data.active && (crmPartner === cleanNameForPulse || cleanNameForPulse.includes(crmPartner))) {
                     card.classList.add('active');
                     document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
                     document.getElementById('live-project').innerText = (data.project || "Projekt").toUpperCase();
@@ -166,31 +168,49 @@
                 }
             });
 
+            // 2. HISTORIE SYNC FIX (Dein angepasster Part)
             const worklogRef = collection(db, "users", ADMIN_UID, "worklogs");
             onSnapshot(worklogRef, (snap) => {
                 const container = document.getElementById('all-activities');
+                
                 if (snap.empty) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Daten vorhanden.</p>`;
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Einträge vorhanden.</p>`;
                     return;
                 }
 
-                let logs = snap.docs.map(d => d.data());
-                const filtered = logs.filter(l => {
-                    if(!l.partner) return false;
-                    return l.partner.toLowerCase().replace(/\s/g, '') === cleanName;
-                });
-                
+                // Filtern der Dokumente basierend auf dem Namen
+                let filtered = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(log => {
+                        if (!log.partner) return false;
+                        const logPartner = log.partner.toLowerCase().trim();
+                        // Vergleicht den Portal-Namen mit dem CRM-Partner-Feld
+                        return logPartner === portalName || portalName.includes(logPartner) || logPartner.includes(portalName);
+                    });
+
+                // Sortierung nach Datum (Neueste zuerst)
                 filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-                if(filtered.length === 0) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Einträge gefunden.</p>`;
+                if (filtered.length === 0) {
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Einträge für "${clientName}" gefunden.</p>`;
                     return;
                 }
 
                 container.innerHTML = "";
                 filtered.forEach(log => {
-                    const d = log.date ? log.date.split('-').reverse().join('.') : "Info";
-                    container.innerHTML += `<div class="log-card"><div><div style="font-weight:600;">${log.project || 'Aufgabe'}</div><div style="font-size:0.75rem; color:var(--gray);">${d}</div></div><div style="text-align:right"><div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div></div></div>`;
+                    // Datum schön formatieren (DD.MM.YYYY)
+                    let displayDate = log.date ? log.date.split('-').reverse().join('.') : "Info";
+                    
+                    container.innerHTML += `
+                        <div class="log-card">
+                            <div>
+                                <div style="font-weight:600;">${log.project || 'Aufgabe'}</div>
+                                <div style="font-size:0.75rem; color:var(--gray);">${displayDate}</div>
+                            </div>
+                            <div style="text-align:right">
+                                <div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div>
+                            </div>
+                        </div>`;
                 });
             });
         }
