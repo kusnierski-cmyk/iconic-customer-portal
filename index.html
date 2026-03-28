@@ -13,12 +13,10 @@
         body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; min-height: 100vh; }
         .hidden { display: none !important; }
 
-        /* --- HEADER --- */
         .header { height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: rgba(17,17,17,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,206,209,0.1); }
         .header h1 { font-family: 'Rajdhani'; font-size: 1.5rem; letter-spacing: 2px; }
         .header span { color: var(--cyan); }
 
-        /* --- LIVE STATUS --- */
         .pulse-card { 
             background: linear-gradient(135deg, #111 0%, #080808 100%);
             border-radius: 20px; padding: 30px; text-align: center; margin: 20px;
@@ -29,10 +27,8 @@
         .active .active-pulse { display: block; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 206, 209, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 206, 209, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 206, 209, 0); } }
 
-        /* --- SECTIONS --- */
         .section-title { font-family: 'Rajdhani'; font-size: 1.2rem; color: var(--gray); margin: 30px 20px 15px; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* --- LOGS --- */
         .log-container { padding: 0 20px; }
         .log-card { 
             background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; 
@@ -41,13 +37,11 @@
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- REQUEST FORM --- */
         .request-box { background: var(--panel); margin: 0 20px 50px; padding: 25px; border-radius: 20px; border: 1px solid rgba(0,206,209,0.1); }
         input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-family: inherit; outline: none; }
         input:focus, textarea:focus { border-color: var(--cyan); }
         .btn { width: 100%; background: var(--cyan); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; font-family: 'Rajdhani'; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; }
 
-        /* --- AUTH --- */
         #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 10000; }
         .auth-card { background: var(--panel); padding: 40px; border-radius: 20px; border: 1px solid var(--cyan); width: 90%; max-width: 380px; text-align: center; }
     </style>
@@ -93,7 +87,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -123,7 +117,8 @@
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('portal-content').classList.remove('hidden');
-                const clientName = user.displayName || user.email.split('@')[0];
+                // Nutze den Display Namen (registrierter Kundenname)
+                const clientName = user.displayName || "Unbekannter Kunde";
                 startSync(clientName);
             }
         });
@@ -131,10 +126,11 @@
         function startSync(name) {
             const cleanName = name.toLowerCase().trim();
 
+            // 1. LIVE STATUS SYNC
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
-                if(data && data.active && data.partner.toLowerCase().trim() === cleanName) {
+                if(data && data.active && data.partner && data.partner.toLowerCase().trim() === cleanName) {
                     card.classList.add('active');
                     document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
                     document.getElementById('live-project').innerText = data.project.toUpperCase();
@@ -147,25 +143,32 @@
                 }
             });
 
-            const q = query(collection(db, "users", ADMIN_UID, "worklogs"), orderBy("date", "desc"));
-            onSnapshot(q, (snap) => {
+            // 2. AKTIVITÄTEN SYNC (CRM-Format Support)
+            onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
                 const container = document.getElementById('all-activities');
                 container.innerHTML = "";
-                const filtered = snap.docs
-                    .map(d => d.data())
-                    .filter(l => l.partner.toLowerCase().trim() === cleanName);
+                
+                let logs = snap.docs.map(d => d.data());
+                const filtered = logs.filter(l => l.partner && l.partner.toLowerCase().trim() === cleanName);
+                
+                // Sortierung nach Datum (Text-Format YYYY-MM-DD ist direkt sortierbar)
+                filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
                 if(filtered.length === 0) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Aktivitäten aufgezeichnet.</p>`;
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Aktivitäten für "${name}" gefunden.</p>`;
                     return;
                 }
 
                 filtered.forEach(log => {
+                    // Datum schön formatieren (von YYYY-MM-DD zu DD.MM.YYYY)
+                    const dateParts = log.date ? log.date.split('-') : [];
+                    const displayDate = dateParts.length === 3 ? `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}` : "Datum unbekannt";
+
                     container.innerHTML += `
                         <div class="log-card">
                             <div>
-                                <div style="font-weight:600; font-size:0.95rem;">${log.project}</div>
-                                <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">${new Date(log.date).toLocaleDateString('de-DE')}</div>
+                                <div style="font-weight:600; font-size:0.95rem;">${log.project || 'Projekt'}</div>
+                                <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">${displayDate}</div>
                             </div>
                             <div style="text-align:right">
                                 <div style="font-family:'Rajdhani'; font-weight:700; color:var(--cyan); font-size:1.1rem;">${log.duration}h</div>
@@ -179,29 +182,24 @@
         window.sendRequest = async () => {
             const title = document.getElementById('req-title').value;
             const msg = document.getElementById('req-msg').value;
-            
             if(!auth.currentUser) return alert("Bitte logge dich erneut ein.");
-            const clientName = auth.currentUser.displayName || auth.currentUser.email.split('@')[0];
+            const clientName = auth.currentUser.displayName || "Unbekannter Kunde";
 
             if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
 
             try {
                 await addDoc(collection(db, "requests"), {
                     title: title,
-                    desc: msg,       // Hinzugefügt für CRM Kompatibilität
-                    message: msg,    // Bestehend
+                    desc: msg,
                     partner: clientName,
                     timestamp: Date.now(),
-                    date: new Date().toLocaleDateString('de-DE'),
                     status: "offen"
                 });
-
-                alert("Deine Anfrage wurde erfolgreich übertragen!");
+                alert("Anfrage wurde gesendet!");
                 document.getElementById('req-title').value = "";
                 document.getElementById('req-msg').value = "";
             } catch (e) {
-                console.error("Fehler beim Senden: ", e);
-                alert("Fehler beim Senden der Anfrage.");
+                alert("Fehler beim Senden.");
             }
         };
     </script>
