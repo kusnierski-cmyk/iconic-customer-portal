@@ -101,7 +101,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Deine Admin-ID aus dem CRM
+        // Deine Admin-ID
         const ADMIN_UID = "69oYfCidK8MOfT9l9Kshh0U6VpS2"; 
 
         window.handleAuth = async () => {
@@ -117,13 +117,11 @@
             try { 
                 const userCredential = await signInWithEmailAndPassword(auth, email, pass);
                 await updateProfile(userCredential.user, { displayName: name });
-                // Speichert den Namen sofort lokal, um den "Undefined"-Fehler zu umgehen
                 localStorage.setItem('crm_client_name', name);
-                
                 setTimeout(() => { location.reload(); }, 500);
             } 
             catch (e) { 
-                document.getElementById('auth-error').innerText = "Login fehlgeschlagen. Daten prüfen."; 
+                document.getElementById('auth-error').innerText = "Login fehlgeschlagen."; 
             }
         };
 
@@ -136,8 +134,6 @@
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('portal-content').classList.remove('hidden');
-                
-                // Holt den Namen aus dem Profil ODER dem lokalen Speicher
                 const activeName = user.displayName || localStorage.getItem('crm_client_name');
                 if(activeName) startSync(activeName);
             }
@@ -153,10 +149,10 @@
                 const card = document.getElementById('pulse-card');
                 const crmPartner = data?.partner ? data.partner.toLowerCase().trim() : "";
 
-                if(data && data.active && crmPartner === cleanName) {
+                if(data && data.active && (crmPartner === cleanName || cleanName.includes(crmPartner))) {
                     card.classList.add('active');
                     document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
-                    document.getElementById('live-project').innerText = data.project.toUpperCase();
+                    document.getElementById('live-project').innerText = (data.project || "Projekt").toUpperCase();
                     document.getElementById('live-desc').innerText = "Wir arbeiten gerade an deinem Projekt.";
                 } else {
                     card.classList.remove('active');
@@ -166,22 +162,26 @@
                 }
             });
 
-            // 2. AKTIVITÄTEN AUS DEN WORKLOGS DES CRMs ZIEHEN
+            // 2. AKTIVITÄTEN AUS DEINEM ADMIN-ORDNER
             const worklogRef = collection(db, "users", ADMIN_UID, "worklogs");
             
             onSnapshot(worklogRef, (snap) => {
                 const container = document.getElementById('all-activities');
+                
                 if (snap.empty) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Noch keine Daten vorhanden.</p>`;
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Daten vorhanden.</p>`;
                     return;
                 }
 
                 let logs = snap.docs.map(d => d.data());
                 
-                // Filtern nach dem Kundennamen
-                const filtered = logs.filter(l => l.partner && l.partner.toLowerCase().trim() === cleanName);
+                // Filtern nach dem Namen (CRM Partner Feld)
+                const filtered = logs.filter(l => {
+                    if(!l.partner) return false;
+                    const logPartner = l.partner.toLowerCase().trim();
+                    return logPartner === cleanName || cleanName.includes(logPartner) || logPartner.includes(cleanName);
+                });
                 
-                // Sortieren (Neueste zuerst)
                 filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
                 if(filtered.length === 0) {
@@ -191,19 +191,16 @@
 
                 container.innerHTML = "";
                 filtered.forEach(log => {
-                    // Datum ins deutsche Format umwandeln (von YYYY-MM-DD zu DD.MM.YYYY)
-                    const d = log.date ? log.date.split('-') : [];
-                    const displayDate = d.length === 3 ? `${d[2]}.${d[1]}.${d[0]}` : log.date;
+                    const d = log.date ? log.date.split('-').reverse().join('.') : "Datum folgt";
 
-                    // Das CRM speichert die Dauer bereits als "00:00:00", wir zeigen es direkt an
                     container.innerHTML += `
                         <div class="log-card">
                             <div>
-                                <div style="font-weight:600; font-size:0.95rem;">${log.project || 'Allgemeine Aufgabe'}</div>
-                                <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">${displayDate}</div>
+                                <div style="font-weight:600; font-size:0.95rem;">${log.project || 'Design & Entwicklung'}</div>
+                                <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">${d}</div>
                             </div>
                             <div style="text-align:right">
-                                <div style="font-family:'Rajdhani'; font-weight:700; color:var(--cyan); font-size:1.1rem;">${log.duration || '00:00'}</div>
+                                <div style="font-family:'Rajdhani'; font-weight:700; color:var(--cyan); font-size:1.1rem;">${log.duration || '00:00:00'}</div>
                                 <div style="font-size:0.6rem; color:var(--gray); text-transform:uppercase;">Zeit</div>
                             </div>
                         </div>`;
@@ -216,8 +213,7 @@
             const msg = document.getElementById('req-msg').value;
             const activeName = auth.currentUser.displayName || localStorage.getItem('crm_client_name');
             
-            if(!activeName) return;
-            if(!title || !msg) return alert("Bitte alle Felder ausfüllen.");
+            if(!activeName || !title || !msg) return alert("Bitte alle Felder ausfüllen.");
 
             try {
                 await addDoc(collection(db, "requests"), {
