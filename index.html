@@ -206,7 +206,27 @@
                 container.innerHTML = "";
                 filtered.forEach(log => {
                     const d = log.date ? log.date.split('-').reverse().join('.') : "Info";
-                    container.innerHTML += `<div class="log-card"><div><div style="font-weight:600;">${log.project || 'Aufgabe'}</div><div style="font-size:0.75rem; color:var(--gray);">${d}</div></div><div style="text-align:right"><div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div></div></div>`;
+                    
+                    // Extraktion von Start- und Pausenzeiten aus dem events-Array
+                    const startTime = log.events?.find(e => e.type === 'Start')?.time || '--:--';
+                    const pauseTime = log.events?.find(e => e.type === 'Pause')?.time || 'Keine';
+                    const price = log.earned ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(log.earned) : '0,00 €';
+
+                    container.innerHTML += `
+                        <div class="log-card">
+                            <div>
+                                <div style="font-weight:600;">${log.project || 'Aufgabe'}</div>
+                                <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">
+                                    <i class="fa-regular fa-calendar"></i> ${d} | 
+                                    <i class="fa-regular fa-clock"></i> Start: ${startTime} | 
+                                    <i class="fa-solid fa-pause"></i> Pause: ${pauseTime}
+                                </div>
+                            </div>
+                            <div style="text-align:right">
+                                <div style="color:var(--cyan); font-weight:700;">${price}</div>
+                                <div style="font-size:0.7rem; color:var(--gray);">${log.duration || '00:00'}</div>
+                            </div>
+                        </div>`;
                 });
             });
         }
