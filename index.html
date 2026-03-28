@@ -172,7 +172,6 @@
         let workLogs = [];
         let authMode = 'login';
 
-        // Globale Funktionen für die Buttons verfügbar machen
         window.toggleAuth = (mode) => {
             authMode = mode;
             document.getElementById('tab-login').classList.toggle('active', mode === 'login');
@@ -186,10 +185,10 @@
             const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('pass').value;
             const err = document.getElementById('auth-error');
-            err.innerText = "Bitte warten...";
+            err.innerText = "Verbindung wird hergestellt...";
 
             if(!email || !pass) {
-                err.innerText = "E-Mail/Passwort fehlen.";
+                err.innerText = "Bitte E-Mail und Passwort eingeben.";
                 return;
             }
 
@@ -207,7 +206,9 @@
                     location.reload();
                 }
             } catch (e) { 
-                err.innerText = e.message; 
+                console.error("Firebase Fehler:", e);
+                // Zeigt den exakten Fehlercode an (z.B. auth/unauthorized-domain)
+                err.innerText = "Fehler: " + (e.code || e.message); 
             }
         };
 
@@ -314,3 +315,4 @@
     </script>
 </body>
 </html>
+
