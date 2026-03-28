@@ -32,8 +32,12 @@
         .log-container { padding: 0 20px; }
         .log-card { 
             background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; 
-            border-left: 4px solid var(--cyan); display: flex; justify-content: space-between; align-items: center;
+            border-left: 4px solid var(--cyan);
         }
+        .log-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .log-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
+        .detail-item { font-size: 0.65rem; color: var(--gray); }
+        .detail-item span { display: block; color: var(--white); font-weight: 600; font-size: 0.8rem; }
 
         .request-box { background: var(--panel); margin: 0 20px 50px; padding: 25px; border-radius: 20px; border: 1px solid rgba(0,206,209,0.1); }
         input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-family: inherit; outline: none; }
@@ -146,7 +150,6 @@
         function startSync(clientName) {
             const cleanName = clientName.toLowerCase().trim();
 
-            // LIVE STATUS SYNC
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
@@ -163,7 +166,6 @@
                 }
             });
 
-            // HISTORIE SYNC
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
                 const container = document.getElementById('all-activities');
                 let logs = snap.docs.map(d => d.data());
@@ -178,7 +180,30 @@
                 container.innerHTML = "";
                 filtered.forEach(log => {
                     const d = log.date ? log.date.split('-').reverse().join('.') : "Info";
-                    container.innerHTML += `<div class="log-card"><div><div style="font-weight:600;">${log.project || 'Aufgabe'}</div><div style="font-size:0.75rem; color:var(--gray);">${d}</div></div><div style="text-align:right"><div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div></div></div>`;
+                    const earned = log.earned ? parseFloat(log.earned).toFixed(2) : "0.00";
+                    
+                    // Zeiten aus der events Liste extrahieren
+                    const evs = log.events || [];
+                    const startTime = evs.find(e => e.type === "Start")?.time || "--:--";
+                    const stopTime = evs.find(e => e.type === "Stop")?.time || "--:--";
+
+                    container.innerHTML += `
+                        <div class="log-card">
+                            <div class="log-top">
+                                <div>
+                                    <div style="font-weight:600;">${log.project || 'Aufgabe'}</div>
+                                    <div style="font-size:0.75rem; color:var(--gray);">${d}</div>
+                                </div>
+                                <div style="text-align:right">
+                                    <div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div>
+                                </div>
+                            </div>
+                            <div class="log-details">
+                                <div class="detail-item">START <span>${startTime}</span></div>
+                                <div class="detail-item">ENDE <span>${stopTime}</span></div>
+                                <div class="detail-item">NETTO <span>${earned} €</span></div>
+                            </div>
+                        </div>`;
                 });
             });
         }
