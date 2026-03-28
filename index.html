@@ -31,7 +31,7 @@
         .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .insight-card { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.03); text-align: center; }
         
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; margin-bottom: 20px; min-height: 180px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; margin-bottom: 20px; }
         .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border-radius: 6px; background: #080808; color: #444; border: 1px solid transparent; }
         .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,206,209,0.2); background: rgba(0,206,209,0.1); }
 
@@ -84,7 +84,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, query, addDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, addDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -103,6 +103,7 @@
         const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2"; 
         let userDisplayName = "";
 
+        // Normalisierung wie im CRM
         const normalize = (str) => str ? str.toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim() : "";
 
         window.handleAuth = async () => {
@@ -127,7 +128,7 @@
         function initPortal() {
             const userKey = normalize(userDisplayName);
 
-            // 1. Live Status Sync
+            // 1. Live Status Sync (global_status/live)
             onSnapshot(doc(db, "global_status", "live"), (s) => {
                 const card = document.getElementById('status-card');
                 if(s.exists()) {
@@ -135,7 +136,7 @@
                     if(d.active && normalize(d.partner) === userKey) {
                         card.classList.add('active');
                         document.getElementById('status-title').innerText = "PROJEKT IN ARBEIT";
-                        document.getElementById('status-desc').innerText = "An deinem Projekt wird aktuell gearbeitet.";
+                        document.getElementById('status-desc').innerText = d.project || "An deinem Projekt wird aktuell gearbeitet.";
                         return;
                     }
                 }
@@ -144,9 +145,10 @@
                 document.getElementById('status-desc').innerText = "Bereit für neue Aufgaben.";
             });
 
-            // 2. Worklogs Sync
+            // 2. Worklogs Sync (users/ADMIN_UID/worklogs)
+            // Wir laden alle Logs und filtern nach Partner, genau wie dein CRM es macht
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
-                const logs = snap.docs.map(d => ({id: d.id, ...d.data()}))
+                const logs = snap.docs.map(d => d.data())
                     .filter(l => normalize(l.partner) === userKey)
                     .sort((a,b) => new Date(b.date) - new Date(a.date));
                 
@@ -159,15 +161,17 @@
         function renderStats(logs) {
             const days = new Set(logs.map(l => l.date)).size;
             document.getElementById('insight-days').innerText = days;
+            
             let totalMin = 0;
             logs.forEach(l => { 
                 if(l.duration && l.duration.includes(':')) { 
-                    const [h, m] = l.duration.split(':').map(Number); 
-                    totalMin += (h * 60) + m; 
+                    const parts = l.duration.split(':').map(Number);
+                    if(parts.length === 3) totalMin += (parts[0] * 60) + parts[1]; // HH:MM:SS
+                    else if(parts.length === 2) totalMin += (parts[0] * 60) + parts[1]; // HH:MM
                 } 
             });
             document.getElementById('insight-hours').innerText = (totalMin / 60).toFixed(1) + "h";
-            document.getElementById('insight-main-project').innerText = logs.length > 0 ? logs[0].project : "Keine aktiven Daten";
+            document.getElementById('insight-main-project').innerText = logs.length > 0 ? logs[0].project : "Keine aktiven Projekte";
         }
 
         function renderCalendar(logs) {
@@ -176,22 +180,17 @@
             const now = new Date();
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
             
-            // Hole alle gearbeiteten Tage und normalisiere das Format
-            const workedDates = logs.map(l => {
-                if(!l.date) return "";
-                // Falls Datum als DD.MM.YYYY kommt, wandle es für den Vergleich um
-                if(l.date.includes('.')) {
-                    const parts = l.date.split('.');
-                    return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-                }
-                return l.date;
-            });
+            // Die Daten im CRM sind YYYY-MM-DD
+            const workedDates = logs.map(l => l.date);
 
             for(let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
                 const div = document.createElement('div');
                 div.className = 'cal-day';
-                if(workedDates.includes(dateStr)) div.classList.add('worked');
+                // Prüfe ob dieses Datum in den Logs vorkommt
+                if(workedDates.includes(dateStr)) {
+                    div.classList.add('worked');
+                }
                 div.innerText = i;
                 grid.appendChild(div);
             }
@@ -210,10 +209,10 @@
                 item.innerHTML = `
                     <div style="display:flex; justify-content:space-between">
                         <strong>${l.project || 'Projekt'}</strong>
-                        <span style="color:var(--cyan)">${l.duration || '0:00'}h</span>
+                        <span style="color:var(--cyan)">${l.duration || '0:00'}</span>
                     </div>
                     <div class="log-meta">
-                        <span>${l.date}</span>
+                        <span>${new Date(l.date).toLocaleDateString('de-DE')}</span>
                         <span>${l.earned ? Number(l.earned).toFixed(2) : '0.00'} €</span>
                     </div>
                 `;
@@ -242,4 +241,3 @@
     </script>
 </body>
 </html>
-
