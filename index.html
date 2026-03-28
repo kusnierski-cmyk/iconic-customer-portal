@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ICONIC | Portal</title>
+    <title>ICONIC | Customer Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -37,24 +37,22 @@
 
         .request-box { background: var(--panel); margin: 0 20px 50px; padding: 25px; border-radius: 20px; border: 1px solid rgba(0,206,209,0.1); }
         input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-family: inherit; outline: none; }
-        input:focus, textarea:focus { border-color: var(--cyan); }
         .btn { width: 100%; background: var(--cyan); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; font-family: 'Rajdhani'; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; }
 
         #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 10000; }
         .auth-card { background: var(--panel); padding: 40px; border-radius: 20px; border: 1px solid var(--cyan); width: 90%; max-width: 380px; text-align: center; }
-        .toggle-auth { color: var(--cyan); font-size: 0.8rem; margin-top: 15px; cursor: pointer; text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
         <div class="auth-card">
-            <h2 id="auth-title" style="font-family:'Rajdhani'; margin-bottom:25px; letter-spacing:2px;">ICONIC <span style="color:var(--cyan)">LOGIN</span></h2>
-            <input type="text" id="login-name" placeholder="Dein Name/Firma">
+            <h2 id="auth-title" style="font-family:'Rajdhani'; margin-bottom:25px; letter-spacing:2px;">ICONIC <span style="color:var(--cyan)">PORTAL</span></h2>
+            <input type="text" id="login-name" placeholder="Name / Firma (Wichtig!)" class="hidden">
             <input type="email" id="login-email" placeholder="E-Mail Adresse">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button class="btn" id="auth-btn" onclick="handleAuth()">Einloggen</button>
-            <p id="auth-toggle-text" class="toggle-auth" onclick="toggleAuthMode()">Registrieren</p>
+            <p onclick="toggleAuthMode()" style="color:var(--cyan); font-size:0.8rem; margin-top:15px; cursor:pointer;">Noch kein Konto? Registrieren</p>
             <p id="auth-error" style="color:var(--danger); font-size:0.8rem; margin-top:15px;"></p>
         </div>
     </div>
@@ -62,23 +60,26 @@
     <div id="portal-content" class="hidden">
         <div class="header">
             <h1>ICONIC <span>PORTAL</span></h1>
-            <button onclick="logout()" style="background:none; border:none; color:var(--danger);"><i class="fa-solid fa-power-off"></i></button>
+            <button onclick="logout()" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fa-solid fa-power-off"></i></button>
         </div>
 
         <div id="pulse-card" class="pulse-card">
             <div class="active-pulse"></div>
             <h4 id="live-label" style="font-family:'Rajdhani'; color:var(--gray); letter-spacing:2px;">SYSTEM STANDBY</h4>
             <h2 id="live-project" style="font-family:'Rajdhani'; font-size:1.8rem; margin:10px 0;">BEREIT</h2>
+            <p id="live-desc" style="font-size:0.8rem; color:var(--gray);">Keine aktive Bearbeitung.</p>
         </div>
 
-        <h3 class="section-title">Deine Historie</h3>
-        <div class="log-container" id="all-activities"></div>
+        <h3 class="section-title">Aktivitäten & Historie</h3>
+        <div class="log-container" id="all-activities">
+            <p style="text-align:center; color:var(--gray); font-size:0.8rem;">Suche Aktivitäten...</p>
+        </div>
 
-        <h3 class="section-title">Anfrage</h3>
+        <h3 class="section-title">Neue Anfrage</h3>
         <div class="request-box">
             <input type="text" id="req-title" placeholder="Betreff">
-            <textarea id="req-msg" rows="4" placeholder="Nachricht..."></textarea>
-            <button class="btn" onclick="sendRequest()">Senden</button>
+            <textarea id="req-msg" rows="4" placeholder="Deine Nachricht..."></textarea>
+            <button class="btn" onclick="sendRequest()">Anfrage senden</button>
         </div>
     </div>
 
@@ -100,28 +101,30 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const ADMIN_ID = "wn9blxkhF7UbSfv0gnqW3EDb1zx2"; 
+        // Geänderte ID mit kleinem w
+        const ADMIN_UID = "wn9blxkhF7UbSfv0gnqW3EDb1zx2"; 
         let isLoginMode = true;
 
         window.toggleAuthMode = () => {
             isLoginMode = !isLoginMode;
-            document.getElementById('auth-title').innerHTML = isLoginMode ? 'ICONIC LOGIN' : 'ICONIC REGISTER';
-            document.getElementById('login-name').style.display = isLoginMode ? 'none' : 'block';
+            document.getElementById('auth-title').innerHTML = isLoginMode ? 'ICONIC <span style="color:var(--cyan)">LOGIN</span>' : 'ICONIC <span style="color:var(--cyan)">REGISTER</span>';
+            document.getElementById('auth-btn').innerText = isLoginMode ? 'Einloggen' : 'Registrieren';
+            document.getElementById('login-name').classList.toggle('hidden');
         };
-        document.getElementById('login-name').style.display = 'none';
 
         window.handleAuth = async () => {
-            const name = document.getElementById('login-name').value.trim();
-            const email = document.getElementById('login-email').value.trim();
+            const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            try {
-                if (isLoginMode) { await signInWithEmailAndPassword(auth, email, pass); } 
-                else {
+            const name = document.getElementById('login-name').value;
+            try { 
+                if(isLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                } else {
                     const res = await createUserWithEmailAndPassword(auth, email, pass);
                     await updateProfile(res.user, { displayName: name });
                 }
                 location.reload();
-            } catch (e) { document.getElementById('auth-error').innerText = e.message; }
+            } catch (e) { document.getElementById('auth-error').innerText = "Fehler: " + e.message; }
         };
 
         window.logout = () => signOut(auth).then(() => location.reload());
@@ -130,53 +133,57 @@
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('portal-content').classList.remove('hidden');
-                startSync(user.displayName || user.email.split('@')[0]);
+                const clientName = user.displayName || user.email.split('@')[0];
+                startSync(clientName);
             }
         });
 
         function startSync(name) {
-            const clientName = name.toLowerCase().trim();
+            const cleanName = name.toLowerCase().trim();
 
-            // 1. LIVE STATUS
+            // 1. LIVE STATUS SYNC
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
-                const label = document.getElementById('live-label');
-                const projectDisplay = document.getElementById('live-project');
-                
-                if(data && data.active) {
-                    const p = data.partner?.toLowerCase() || "";
-                    // Wenn der Partner-Eintrag im CRM "iconic" ODER den Namen des Users enthält
-                    if(p.includes("iconic") || p.includes(clientName) || clientName.includes(p)) {
-                        card.classList.add('active');
-                        label.innerText = "LIVE IN BEARBEITUNG";
-                        projectDisplay.innerText = (data.project || "Projekt").toUpperCase();
-                        return;
-                    }
+                if(data && data.active && data.partner && (data.partner.toLowerCase().trim() === cleanName || data.partner.toLowerCase() === "iconic")) {
+                    card.classList.add('active');
+                    document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
+                    document.getElementById('live-project').innerText = data.project.toUpperCase();
+                    document.getElementById('live-desc').innerText = "Wir arbeiten gerade an deinem Projekt.";
+                } else {
+                    card.classList.remove('active');
+                    document.getElementById('live-label').innerText = "SYSTEM STANDBY";
+                    document.getElementById('live-project').innerText = "BEREIT";
+                    document.getElementById('live-desc').innerText = "Aktuell keine aktive Bearbeitung.";
                 }
-                card.classList.remove('active');
-                label.innerText = "SYSTEM STANDBY";
-                projectDisplay.innerText = "BEREIT";
             });
 
-            // 2. HISTORIE
-            const worklogRef = collection(db, "users", ADMIN_ID, "worklogs");
-            onSnapshot(worklogRef, (snap) => {
+            // 2. AKTIVITÄTEN SYNC
+            onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
                 const container = document.getElementById('all-activities');
-                let logs = snap.docs.map(d => d.data()).filter(l => {
-                    const p = l.partner?.toLowerCase() || "";
-                    return p.includes("iconic") || p.includes(clientName) || clientName.includes(p);
-                }).sort((a,b) => (b.date || "").localeCompare(a.date || ""));
+                container.innerHTML = "";
+                let logs = snap.docs.map(d => d.data());
+                const filtered = logs.filter(l => l.partner && (l.partner.toLowerCase().trim() === cleanName || l.partner.toLowerCase() === "iconic"));
+                filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-                if (logs.length === 0) {
-                    container.innerHTML = `<p style="text-align:center; color:gray; padding:20px;">Noch keine Aktivitäten.</p>`;
+                if(filtered.length === 0) {
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Aktivitäten gefunden.</p>`;
                     return;
                 }
 
-                container.innerHTML = "";
-                logs.forEach(log => {
-                    let d = log.date ? log.date.split('-').reverse().join('.') : "Info";
-                    container.innerHTML += `<div class="log-card"><div><div style="font-weight:600;">${log.project}</div><div style="font-size:0.75rem; color:var(--gray);">${d}</div></div><div style="text-align:right"><div style="color:var(--cyan); font-weight:700;">${log.duration}</div></div></div>`;
+                filtered.forEach(log => {
+                    const dateParts = log.date ? log.date.split('-') : [];
+                    const displayDate = dateParts.length === 3 ? `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}` : "Info";
+                    container.innerHTML += `
+                        <div class="log-card">
+                            <div>
+                                <div style="font-weight:600; font-size:0.95rem;">${log.project || 'Projekt'}</div>
+                                <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">${displayDate}</div>
+                            </div>
+                            <div style="text-align:right">
+                                <div style="font-family:'Rajdhani'; font-weight:700; color:var(--cyan); font-size:1.1rem;">${log.duration}</div>
+                            </div>
+                        </div>`;
                 });
             });
         }
@@ -185,8 +192,10 @@
             const title = document.getElementById('req-title').value;
             const msg = document.getElementById('req-msg').value;
             if(!title || !msg) return alert("Felder ausfüllen");
-            await addDoc(collection(db, "requests"), { title, desc: msg, partner: auth.currentUser.displayName, timestamp: Date.now() });
-            alert("Senden erfolgreich!");
+            await addDoc(collection(db, "requests"), {
+                title, desc: msg, partner: auth.currentUser.displayName, timestamp: Date.now(), status: "offen"
+            });
+            alert("Gesendet!");
         };
     </script>
 </body>
