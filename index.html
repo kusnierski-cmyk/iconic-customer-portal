@@ -187,8 +187,15 @@
             const err = document.getElementById('auth-error');
             err.innerText = "Verbindung wird hergestellt...";
 
+            const timer = setTimeout(() => {
+                if(err.innerText.includes("Verbindung")) {
+                    err.innerText = "Timeout: Google antwortet nicht. (Prüfe Internet/Blocker)";
+                }
+            }, 8000);
+
             if(!email || !pass) {
-                err.innerText = "Bitte E-Mail und Passwort eingeben.";
+                clearTimeout(timer);
+                err.innerText = "E-Mail/Passwort fehlen.";
                 return;
             }
 
@@ -205,9 +212,10 @@
                     await updateProfile(cred.user, { displayName: company });
                     location.reload();
                 }
+                clearTimeout(timer);
             } catch (e) { 
-                console.error("Firebase Fehler:", e);
-                // Zeigt den exakten Fehlercode an (z.B. auth/unauthorized-domain)
+                clearTimeout(timer);
+                console.error(e);
                 err.innerText = "Fehler: " + (e.code || e.message); 
             }
         };
@@ -315,4 +323,3 @@
     </script>
 </body>
 </html>
-
