@@ -112,7 +112,7 @@
         import { getFirestore, doc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0y0h4",
+            apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
             authDomain: "iconic-visual-concepts-crm.firebaseapp.com",
             projectId: "iconic-visual-concepts-crm",
             storageBucket: "iconic-visual-concepts-crm.firebasestorage.app",
@@ -170,7 +170,6 @@
         function startSync(clientName) {
             const cleanName = clientName.toLowerCase().trim();
 
-            // LIVE STATUS SYNC
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('pulse-card');
@@ -191,7 +190,6 @@
                 }
             });
 
-            // HISTORIE SYNC
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
                 const container = document.getElementById('all-activities');
                 let logs = snap.docs.map(d => d.data());
@@ -206,8 +204,6 @@
                 container.innerHTML = "";
                 filtered.forEach(log => {
                     const d = log.date ? log.date.split('-').reverse().join('.') : "Info";
-                    
-                    // Extraktion von Start- und Pausenzeiten aus dem events-Array
                     const startTime = log.events?.find(e => e.type === 'Start')?.time || '--:--';
                     const pauseTime = log.events?.find(e => e.type === 'Pause')?.time || 'Keine';
                     const price = log.earned ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(log.earned) : '0,00 €';
