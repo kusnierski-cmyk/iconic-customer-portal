@@ -31,7 +31,7 @@
         .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .insight-card { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.03); text-align: center; }
         
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; margin-bottom: 20px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; margin-bottom: 20px; min-height: 200px; }
         .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border-radius: 6px; background: #080808; color: #444; }
         .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,206,209,0.2); background: rgba(0,206,209,0.1); }
 
@@ -115,7 +115,8 @@
 
         onAuthStateChanged(auth, (user) => {
             if(user) {
-                userCompany = user.displayName || "Kunde";
+                // Wir nutzen den displayName des Auth-Users. WICHTIG: Im CRM muss der Kunde GENAU so heißen.
+                userCompany = (user.displayName || "Kunde").trim().toLowerCase();
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('main-content').classList.remove('hidden');
                 initPortal();
@@ -123,26 +124,27 @@
         });
 
         function initPortal() {
-            // 1. Live Status Sync
+            // 1. Live Status Sync - TEXTE GEÄNDERT WIE GEWÜNSCHT
             onSnapshot(doc(db, "global_status", "live"), (s) => {
-                if(!s.exists()) return;
-                const d = s.data();
                 const card = document.getElementById('status-card');
-                if(d.active && d.partner?.toLowerCase().trim() === userCompany.toLowerCase().trim()) {
-                    card.classList.add('active');
-                    document.getElementById('status-title').innerText = "LIVE IN PROGRESS";
-                    document.getElementById('status-desc').innerText = "Bearbeitung: " + (d.project || "Aktiv");
-                } else {
-                    card.classList.remove('active');
-                    document.getElementById('status-title').innerText = "SYSTEM STANDBY";
-                    document.getElementById('status-desc').innerText = "Bereit für neue Aufgaben.";
+                if(s.exists()) {
+                    const d = s.data();
+                    if(d.active && d.partner && d.partner.trim().toLowerCase() === userCompany) {
+                        card.classList.add('active');
+                        document.getElementById('status-title').innerText = "JETZT LIVE GEARBEITET";
+                        document.getElementById('status-desc').innerText = "An deinem Projekt wird aktuell gearbeitet.";
+                        return;
+                    }
                 }
+                card.classList.remove('active');
+                document.getElementById('status-title').innerText = "SYSTEM STANDBY";
+                document.getElementById('status-desc').innerText = "Bereit für neue Aufgaben.";
             });
 
-            // 2. Worklogs Sync
+            // 2. Worklogs Sync - FILTERUNG VERBESSERT
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
                 const logs = snap.docs.map(d => d.data())
-                    .filter(l => l.partner?.toLowerCase().trim() === userCompany.toLowerCase().trim())
+                    .filter(l => l.partner && l.partner.trim().toLowerCase() === userCompany)
                     .sort((a,b) => new Date(b.date) - new Date(a.date));
                 
                 renderStats(logs);
@@ -156,13 +158,13 @@
             document.getElementById('insight-days').innerText = days;
             let totalMin = 0;
             logs.forEach(l => { 
-                if(l.duration?.includes(':')) { 
+                if(l.duration && l.duration.includes(':')) { 
                     const [h, m] = l.duration.split(':').map(Number); 
                     totalMin += (h * 60) + m; 
                 } 
             });
             document.getElementById('insight-hours').innerText = (totalMin / 60).toFixed(1) + "h";
-            if(logs.length > 0) document.getElementById('insight-main-project').innerText = logs[0].project;
+            document.getElementById('insight-main-project').innerText = logs.length > 0 ? logs[0].project : "Keine aktiven Daten";
         }
 
         function renderCalendar(logs) {
@@ -170,17 +172,12 @@
             grid.innerHTML = "";
             const now = new Date();
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            
-            // Worked Dates sammeln (Format YYYY-MM-DD für Vergleich)
-            const worked = logs.map(l => l.date);
+            const workedDates = logs.map(l => l.date);
 
             for(let i = 1; i <= daysInMonth; i++) {
-                const day = i.toString().padStart(2, '0');
-                const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                const dateStr = `${now.getFullYear()}-${month}-${day}`;
-                
+                const dayStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
                 const div = document.createElement('div');
-                div.className = `cal-day ${worked.includes(dateStr) ? 'worked' : ''}`;
+                div.className = `cal-day ${workedDates.includes(dayStr) ? 'worked' : ''}`;
                 div.innerText = i;
                 grid.appendChild(div);
             }
@@ -194,8 +191,8 @@
                 item.className = 'log-item';
                 item.innerHTML = `
                     <div style="display:flex; justify-content:space-between">
-                        <strong>${l.project}</strong>
-                        <span style="color:var(--cyan)">${l.duration}h</span>
+                        <strong>${l.project || 'Projekt'}</strong>
+                        <span style="color:var(--cyan)">${l.duration || '0:00'}h</span>
                     </div>
                     <div class="log-meta">
                         <span>${l.date}</span>
@@ -212,13 +209,12 @@
             if(!title || !msg) return alert("Bitte alle Felder ausfüllen.");
             
             try {
-                // EXAKT passend zu deinem CRM-Code (data.title, data.desc, data.timestamp)
                 await addDoc(collection(db, "requests"), {
                     title: title,
                     desc: msg,
-                    partner: userCompany,
+                    partner: userCompany, // Wird klein gesendet, passt zum CRM Filter
                     status: "offen",
-                    timestamp: Date.now() // CRM nutzt new Date(data.timestamp), daher Date.now() statt serverTimestamp
+                    timestamp: Date.now()
                 });
                 alert("Anfrage erfolgreich gesendet!");
                 document.getElementById('req-title').value = "";
