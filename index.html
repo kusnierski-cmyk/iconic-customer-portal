@@ -19,7 +19,7 @@
         .header { font-family: 'Rajdhani'; font-size: 1.5rem; margin-bottom: 30px; border-bottom: 1px solid rgba(0,206,209,0.3); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .header span { color: var(--cyan); }
         .status-card { background: var(--panel); border-radius: 20px; padding: 40px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center; }
-        .status-card.active { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0,206,209,0.2); }
+        .status-card.active { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 206, 209, 0.2); }
         .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .insight-card { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.03); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; }
@@ -62,7 +62,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -76,10 +76,10 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const ADMIN_UID = "689489453527";
         let userCompany = "";
         let authMode = 'login';
 
-        // UI Toggle
         window.toggleAuth = (m) => {
             authMode = m;
             document.getElementById('tab-login').className = m === 'login' ? 'auth-tab active' : 'auth-tab';
@@ -101,10 +101,9 @@
             const e = document.getElementById('email').value.trim();
             const p = document.getElementById('pass').value;
             const err = document.getElementById('auth-error');
-            
             if(!e || !p) { err.innerText = "Bitte Felder ausfüllen."; return; }
             err.style.color = "var(--cyan)";
-            err.innerText = "Verbindung zu Google...";
+            err.innerText = "Verbindung...";
 
             try {
                 if(authMode === 'login') {
@@ -115,22 +114,20 @@
                     if(!comp) throw new Error("Firmenname fehlt.");
                     const res = await createUserWithEmailAndPassword(auth, e, p);
                     await updateProfile(res.user, { displayName: comp });
-                    // Seite neu laden um DisplayName im Auth-State zu festigen
                     location.reload();
                 }
             } catch (error) { 
                 err.style.color = "var(--danger)";
-                err.innerText = error.code === 'auth/invalid-credential' ? "Daten falsch." : error.message; 
+                err.innerText = error.message; 
             }
         };
 
         window.logout = () => signOut(auth).then(() => location.reload());
 
-        // Automatischer Login-Check beim Start
         onAuthStateChanged(auth, (user) => { if(user) showPortal(user); });
 
-        function initPortal() {
-            // Live Status Abfrage
+        async function initPortal() {
+            // 1. LIVE STATUS (Snapshot für Echtzeit)
             onSnapshot(doc(db, "global_status", "live"), (s) => {
                 if(!s.exists()) return;
                 const d = s.data();
@@ -138,13 +135,62 @@
                 if(d.active && d.partner === userCompany) {
                     card.classList.add('active');
                     document.getElementById('status-title').innerText = "LIVE IN PROGRESS";
-                    document.getElementById('status-desc').innerText = "Bearbeitung: " + d.project;
+                    document.getElementById('status-desc').innerText = "Bearbeitung: " + (d.project || "Aktiv");
                 } else {
                     card.classList.remove('active');
                     document.getElementById('status-title').innerText = "SYSTEM STANDBY";
                     document.getElementById('status-desc').innerText = "Momentan keine aktive Bearbeitung.";
                 }
-            }, (error) => { console.error("Firestore Error:", error); });
+            });
+
+            // 2. WORKLOGS LADEN
+            try {
+                const q = query(
+                    collection(db, "users", ADMIN_UID, "worklogs"),
+                    where("partner", "==", userCompany)
+                );
+                
+                const snap = await getDocs(q);
+                const logs = snap.docs.map(d => d.data());
+                
+                if(logs.length > 0) {
+                    renderStats(logs);
+                    renderCalendar(logs);
+                }
+            } catch (e) {
+                console.error("Daten-Fehler:", e);
+            }
+        }
+
+        function renderStats(logs) {
+            const uniqueDays = new Set(logs.map(l => l.date)).size;
+            document.getElementById('insight-days').innerText = uniqueDays;
+            
+            let totalMin = 0;
+            logs.forEach(l => {
+                if(l.duration && l.duration.includes(':')) {
+                    const [h, m] = l.duration.split(':').map(Number);
+                    totalMin += (h * 60) + m;
+                }
+            });
+            document.getElementById('insight-hours').innerText = (totalMin / 60).toFixed(1) + "h";
+            document.getElementById('insight-main-project').innerText = logs[logs.length-1].project || "Aktiv";
+        }
+
+        function renderCalendar(logs) {
+            const grid = document.getElementById('calendar');
+            grid.innerHTML = "";
+            const now = new Date();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            
+            for(let i = 1; i <= daysInMonth; i++) {
+                const day = document.createElement('div');
+                const dateStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+                const worked = logs.some(l => l.date === dateStr);
+                day.className = `cal-day ${worked ? 'worked' : ''}`;
+                day.innerText = i;
+                grid.appendChild(day);
+            }
         }
     </script>
 </body>
