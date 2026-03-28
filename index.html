@@ -167,9 +167,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // DEINE ADMIN-ID AUS DEM CRM
         const ADMIN_UID = "689489453527";
-
         let userCompany = "";
         let workLogs = [];
         let authMode = 'login';
@@ -177,17 +175,23 @@
         window.toggleAuth = (mode) => {
             authMode = mode;
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            if(event) event.target.classList.add('active');
+            if(event && event.target) event.target.classList.add('active');
             
             document.getElementById('register-fields').classList.toggle('hidden', mode === 'login');
             document.getElementById('auth-btn').innerText = mode === 'login' ? 'Anmelden' : 'Konto erstellen';
+            document.getElementById('auth-error').innerText = "";
         };
 
         window.handleAuth = async () => {
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('pass').value;
             const err = document.getElementById('auth-error');
             err.innerText = "";
+
+            if(!email || !pass) {
+                err.innerText = "Bitte E-Mail und Passwort eingeben.";
+                return;
+            }
 
             try {
                 if(authMode === 'login') {
@@ -237,11 +241,13 @@
         }
 
         async function loadWorkLogs() {
-            const q = query(collection(db, "users", ADMIN_UID, "worklogs"), where("partner", "==", userCompany));
-            const snap = await getDocs(q);
-            workLogs = snap.docs.map(d => d.data());
-            renderCalendar();
-            renderInsights();
+            try {
+                const q = query(collection(db, "users", ADMIN_UID, "worklogs"), where("partner", "==", userCompany));
+                const snap = await getDocs(q);
+                workLogs = snap.docs.map(d => d.data());
+                renderCalendar();
+                renderInsights();
+            } catch (e) { console.error("Logs konnten nicht geladen werden", e); }
         }
 
         function renderInsights() {
@@ -262,6 +268,7 @@
 
         window.renderCalendar = () => {
             const grid = document.getElementById('calendar');
+            if(!grid) return;
             grid.innerHTML = "";
             const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
             for(let i=1; i<=daysInMonth; i++) {
@@ -305,3 +312,4 @@
     </script>
 </body>
 </html>
+
