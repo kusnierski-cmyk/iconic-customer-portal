@@ -103,7 +103,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Deine ECHTE Admin-UID korrigiert
+        // AKTUALISIERTE ADMIN-UID (entspricht deinem CRM-Login)
         const ADMIN_UID = "Wn9blxkhF7UbSfv0gnqW3EDb1zx2"; 
         let isLoginMode = true;
 
@@ -148,7 +148,7 @@
 
         function startSync(clientName) {
             if(!clientName) return;
-            const cleanName = clientName.toLowerCase().replace(/\s/g, ''); // Entfernt alle Leerzeichen für Vergleich
+            const cleanName = clientName.toLowerCase().replace(/\s/g, '');
 
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
@@ -175,34 +175,22 @@
                 }
 
                 let logs = snap.docs.map(d => d.data());
-                
-                // Filtern der Logs nach Partnername (ignoriert Leerzeichen und Groß/Kleinschreibung)
                 const filtered = logs.filter(l => {
                     if(!l.partner) return false;
-                    const logPartner = l.partner.toLowerCase().replace(/\s/g, '');
-                    return logPartner === cleanName;
+                    return l.partner.toLowerCase().replace(/\s/g, '') === cleanName;
                 });
                 
                 filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
                 if(filtered.length === 0) {
-                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Einträge für "${clientName}" gefunden.</p>`;
+                    container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Einträge gefunden.</p>`;
                     return;
                 }
 
                 container.innerHTML = "";
                 filtered.forEach(log => {
                     const d = log.date ? log.date.split('-').reverse().join('.') : "Info";
-                    container.innerHTML += `
-                        <div class="log-card">
-                            <div>
-                                <div style="font-weight:600;">${log.project || 'Aufgabe'}</div>
-                                <div style="font-size:0.75rem; color:var(--gray);">${d}</div>
-                            </div>
-                            <div style="text-align:right">
-                                <div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div>
-                            </div>
-                        </div>`;
+                    container.innerHTML += `<div class="log-card"><div><div style="font-weight:600;">${log.project || 'Aufgabe'}</div><div style="font-size:0.75rem; color:var(--gray);">${d}</div></div><div style="text-align:right"><div style="color:var(--cyan); font-weight:700;">${log.duration || '00:00'}</div></div></div>`;
                 });
             });
         }
@@ -227,7 +215,7 @@
                 document.getElementById('req-msg').value = "";
             } catch (e) { 
                 console.error(e);
-                alert("Fehler beim Senden. Bitte Firebase-Regeln prüfen."); 
+                alert("Fehler beim Senden."); 
             }
         };
     </script>
