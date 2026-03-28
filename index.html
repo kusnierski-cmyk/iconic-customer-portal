@@ -65,7 +65,7 @@
         </div>
 
         <div class="insights-grid">
-            <div class="insight-card" style="grid-column: span 2;"><span id="insight-main-project">Keine aktiven Daten</span></div>
+            <div class="insight-card" style="grid-column: span 2;"><span id="insight-main-project">Daten werden geladen...</span></div>
             <div class="insight-card"><span id="insight-days">0</span> Tage</div>
             <div class="insight-card"><span id="insight-hours">0h</span> Zeit</div>
         </div>
@@ -103,7 +103,6 @@
         const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2"; 
         let userDisplayName = "";
 
-        // Verbesserte Normalisierung
         const normalize = (str) => str ? str.toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim() : "";
 
         window.handleAuth = async () => {
@@ -147,7 +146,7 @@
 
             // 2. Worklogs Sync
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
-                const logs = snap.docs.map(d => d.data())
+                const logs = snap.docs.map(d => ({id: d.id, ...d.data()}))
                     .filter(l => normalize(l.partner) === userKey)
                     .sort((a,b) => new Date(b.date) - new Date(a.date));
                 
@@ -173,10 +172,20 @@
 
         function renderCalendar(logs) {
             const grid = document.getElementById('calendar');
-            grid.innerHTML = ""; // Reset
+            grid.innerHTML = "";
             const now = new Date();
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            const workedDates = logs.map(l => l.date);
+            
+            // Hole alle gearbeiteten Tage und normalisiere das Format
+            const workedDates = logs.map(l => {
+                if(!l.date) return "";
+                // Falls Datum als DD.MM.YYYY kommt, wandle es für den Vergleich um
+                if(l.date.includes('.')) {
+                    const parts = l.date.split('.');
+                    return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                }
+                return l.date;
+            });
 
             for(let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
@@ -233,3 +242,4 @@
     </script>
 </body>
 </html>
+
