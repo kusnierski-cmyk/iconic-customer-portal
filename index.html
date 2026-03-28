@@ -172,6 +172,7 @@
         let workLogs = [];
         let authMode = 'login';
 
+        // Globale Funktionen für Handy-Browser
         window.toggleAuth = (mode) => {
             authMode = mode;
             document.getElementById('tab-login').classList.toggle('active', mode === 'login');
@@ -185,19 +186,23 @@
             const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('pass').value;
             const err = document.getElementById('auth-error');
-            err.innerText = "Verbindung wird hergestellt...";
-
-            const timer = setTimeout(() => {
-                if(err.innerText.includes("Verbindung")) {
-                    err.innerText = "Timeout: Google antwortet nicht. (Prüfe Internet/Blocker)";
-                }
-            }, 8000);
+            
+            err.style.color = "var(--cyan)";
+            err.innerText = "Prüfe Daten...";
 
             if(!email || !pass) {
-                clearTimeout(timer);
-                err.innerText = "E-Mail/Passwort fehlen.";
+                err.style.color = "var(--danger)";
+                err.innerText = "E-Mail oder Passwort fehlt.";
                 return;
             }
+
+            // Timeout nach 10 Sek
+            const timeout = setTimeout(() => {
+                if(err.innerText.includes("Prüfe")) {
+                    err.style.color = "var(--danger)";
+                    err.innerText = "Netzwerk-Fehler: Google antwortet nicht.";
+                }
+            }, 10000);
 
             try {
                 if(authMode === 'login') {
@@ -212,11 +217,12 @@
                     await updateProfile(cred.user, { displayName: company });
                     location.reload();
                 }
-                clearTimeout(timer);
+                clearTimeout(timeout);
             } catch (e) { 
-                clearTimeout(timer);
-                console.error(e);
-                err.innerText = "Fehler: " + (e.code || e.message); 
+                clearTimeout(timeout);
+                console.error("Auth Error:", e);
+                err.style.color = "var(--danger)";
+                err.innerText = "Fehler: " + (e.code || "Unbekannter Fehler"); 
             }
         };
 
