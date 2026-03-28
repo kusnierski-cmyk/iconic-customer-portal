@@ -69,7 +69,7 @@
         .insight-label { font-size: 0.6rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
 
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; }
-        .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border-radius: 6px; background: #080808; color: #444; }
+        .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border-radius: 6px; background: #080808; color: #444; transition: 0.3s; }
         .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); font-weight: 700; cursor: pointer; }
         .cal-day.active-sel { background: var(--cyan); color: #000; }
 
@@ -84,8 +84,8 @@
     <div id="auth-overlay">
         <div class="auth-card">
             <div class="auth-tabs">
-                <div class="auth-tab active" onclick="toggleAuth('login')">LOGIN</div>
-                <div class="auth-tab" onclick="toggleAuth('register')">REGISTRIEREN</div>
+                <div class="auth-tab active" id="tab-login" onclick="toggleAuth('login')">LOGIN</div>
+                <div class="auth-tab" id="tab-register" onclick="toggleAuth('register')">REGISTRIEREN</div>
             </div>
             <div id="login-fields">
                 <input type="email" id="email" placeholder="E-Mail">
@@ -93,7 +93,9 @@
             </div>
             <div id="register-fields" class="hidden">
                 <input type="text" id="reg-company" placeholder="Firmenname (Exakt wie im CRM)">
-                <input type="password" id="pass2" placeholder="Passwort wiederholen">
+                <input type="email" id="reg-email" placeholder="E-Mail">
+                <input type="password" id="reg-pass" placeholder="Passwort">
+                <input type="password" id="reg-pass2" placeholder="Passwort wiederholen">
                 <label style="font-size: 0.7rem; color: var(--gray); display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
                     <input type="checkbox" id="privacy" style="width: auto; margin: 0;"> Ich akzeptiere die Datenschutzbestimmungen
                 </label>
@@ -144,7 +146,7 @@
             <h3 style="font-family: 'Rajdhani'; margin-bottom: 15px;">NEUE ANFRAGE</h3>
             <input type="text" id="req-title" placeholder="Worum geht es?">
             <textarea id="req-desc" rows="3" placeholder="Details..."></textarea>
-            <button class="btn-send" onclick="sendRequest()">Senden</button>
+            <button class="btn-send" onclick="sendRequest()">Anfrage Senden</button>
         </div>
     </div>
 
@@ -153,18 +155,22 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, collection, getDocs, query, where, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // DEINE FIREBASE CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
             authDomain: "iconic-visual-concepts-crm.firebaseapp.com",
             projectId: "iconic-visual-concepts-crm",
             storageBucket: "iconic-visual-concepts-crm.firebasestorage.app",
             messagingSenderId: "689489453527",
-            appId: "1:689489453527:web:8751120904703b47602b92"
+            appId: "1:689489453527:web:e93aa32ba0a56cd0602b92" // Deine Portal App-ID
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // Deine Admin User-ID (Damit Kundenportal weiß, woher die Daten kommen)
+        const ADMIN_UID = "689489453527"; // Ersetze dies durch deine tatsächliche Firebase UID falls abweichend
 
         let userCompany = "";
         let workLogs = [];
@@ -173,32 +179,38 @@
         // --- AUTH LOGIC ---
         window.toggleAuth = (mode) => {
             authMode = mode;
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+            document.getElementById('tab-register').classList.toggle('active', mode === 'register');
             document.getElementById('login-fields').classList.toggle('hidden', mode === 'register');
             document.getElementById('register-fields').classList.toggle('hidden', mode === 'login');
             document.getElementById('auth-btn').innerText = mode === 'login' ? 'Anmelden' : 'Konto erstellen';
         };
 
         window.handleAuth = async () => {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('pass').value;
             const err = document.getElementById('auth-error');
+            err.innerText = "";
 
             try {
                 if(authMode === 'login') {
+                    const email = document.getElementById('email').value;
+                    const pass = document.getElementById('pass').value;
                     await signInWithEmailAndPassword(auth, email, pass);
                 } else {
                     const company = document.getElementById('reg-company').value.trim();
-                    const pass2 = document.getElementById('pass2').value;
-                    if(!company || !document.getElementById('privacy').checked) throw new Error("Daten unvollständig.");
-                    if(pass !== pass2) throw new Error("Passwörter nicht gleich.");
+                    const email = document.getElementById('reg-email').value;
+                    const pass = document.getElementById('reg-pass').value;
+                    const pass2 = document.getElementById('reg-pass2').value;
+                    
+                    if(!company || !email || !pass || !document.getElementById('privacy').checked) throw new Error("Bitte alle Felder ausfüllen.");
+                    if(pass !== pass2) throw new Error("Passwörter stimmen nicht überein.");
                     
                     const cred = await createUserWithEmailAndPassword(auth, email, pass);
                     await updateProfile(cred.user, { displayName: company });
-                    location.reload();
+                    window.location.reload();
                 }
-            } catch (e) { err.innerText = e.message; }
+            } catch (e) { 
+                err.innerText = e.message; 
+            }
         };
 
         window.logout = () => signOut(auth);
@@ -217,14 +229,14 @@
 
         // --- DATA LOGIC ---
         function initPortal() {
-            // Live Status Monitor (Gefiltert auf User)
+            // Live Status Monitor
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
                 const card = document.getElementById('status-card');
                 if(data && data.active && data.partner === userCompany) {
                     card.classList.add('active');
                     document.getElementById('status-title').innerText = "LIVE IN PROGRESS";
-                    document.getElementById('status-desc').innerText = "Wir arbeiten an: " + data.project;
+                    document.getElementById('status-desc').innerText = "Wir arbeiten gerade an: " + data.project;
                 } else {
                     card.classList.remove('active');
                     document.getElementById('status-title').innerText = "SYSTEM STANDBY";
@@ -236,12 +248,16 @@
         }
 
         async function loadWorkLogs() {
-            // Wir ziehen alle Logs für diese Firma (Pfad muss im CRM stimmen)
-            const q = query(collection(db, "users", "6y8P9lG8uYUrXvV9T6vW8eE2lFh2", "worklogs"), where("partner", "==", userCompany));
-            const snap = await getDocs(q);
-            workLogs = snap.docs.map(d => d.data());
-            renderCalendar();
-            renderInsights();
+            try {
+                // Lädt Logs aus dem CRM-Bereich des Admins, gefiltert auf die Firma des Kunden
+                const q = query(collection(db, "users", "689489453527", "worklogs"), where("partner", "==", userCompany));
+                const snap = await getDocs(q);
+                workLogs = snap.docs.map(d => d.data());
+                renderCalendar();
+                renderInsights();
+            } catch (e) {
+                console.error("Fehler beim Laden der Logs:", e);
+            }
         }
 
         function renderInsights() {
@@ -265,9 +281,11 @@
         function renderCalendar() {
             const grid = document.getElementById('calendar');
             grid.innerHTML = "";
-            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+            const now = new Date();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            
             for(let i=1; i<=daysInMonth; i++) {
-                const dateStr = `${new Date().getFullYear()}-${(new Date().getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+                const dateStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
                 const hasWork = workLogs.some(l => l.date === dateStr);
                 const day = document.createElement('div');
                 day.className = `cal-day ${hasWork ? 'worked' : ''}`;
@@ -277,7 +295,7 @@
             }
         }
 
-        function showDay(dateStr, el) {
+        window.showDay = (dateStr, el) => {
             document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('active-sel'));
             el.classList.add('active-sel');
             const logs = workLogs.filter(l => l.date === dateStr);
@@ -289,20 +307,26 @@
                     <span style="font-size:0.7rem; color:var(--gray)">Dauer: ${l.duration}</span>
                 </div>
             `).join('');
-        }
+        };
 
         window.sendRequest = async () => {
             const t = document.getElementById('req-title').value;
             const d = document.getElementById('req-desc').value;
-            if(!t || !d) return alert("Bitte ausfüllen.");
-            await addDoc(collection(db, "requests"), { 
-                title: t, 
-                desc: d, 
-                partner: userCompany, 
-                timestamp: Date.now() 
-            });
-            alert("Anfrage gesendet!");
-            document.getElementById('req-title').value = ""; document.getElementById('req-desc').value = "";
+            if(!t || !d) return alert("Bitte Titel und Details ausfüllen.");
+            
+            try {
+                await addDoc(collection(db, "requests"), { 
+                    title: t, 
+                    desc: d, 
+                    partner: userCompany, 
+                    timestamp: Date.now() 
+                });
+                alert("Anfrage gesendet!");
+                document.getElementById('req-title').value = ""; 
+                document.getElementById('req-desc').value = "";
+            } catch (e) {
+                alert("Fehler beim Senden: " + e.message);
+            }
         };
     </script>
 </body>
