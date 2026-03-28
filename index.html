@@ -2,135 +2,163 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ICONIC | Customer Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ICONIC OS | Agency Pro</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ICONIC OS">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-512.png">
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; --success: #2ed573; }
+        :root {
+            --bg-dark: #050505; --bg-panel: #111111; --bg-hover: #1a1a1a;
+            --cyan: #00CED1; --white: #ffffff; --gray: #888888; 
+            --danger: #ff4757; --success: #2ed573; --warning: #ffa502;
+            --font-logo: 'Rajdhani', sans-serif; --font-ui: 'Montserrat', sans-serif;
+            --nav-width: 250px;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-dark); color: var(--white); font-family: var(--font-ui); overflow-x: hidden; display: flex; height: 100vh; }
+
+        /* --- LOGIN OVERLAY --- */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-dark); z-index: 9999; display: flex; 
+            align-items: center; justify-content: center;
+        }
+        .auth-card {
+            background: var(--bg-panel); padding: 40px; border-radius: 15px; 
+            border: 1px solid var(--cyan); width: 100%; max-width: 400px; text-align: center;
+        }
+
+        /* --- NAVIGATION --- */
+        .sidebar { width: var(--nav-width); background: var(--bg-panel); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; padding: 30px 20px; z-index: 100; }
+        .logo { font-family: var(--font-logo); font-size: 2rem; font-weight: 700; color: var(--white); text-decoration: none; letter-spacing: 2px; margin-bottom: 50px; text-align: center;}
+        .logo span { color: var(--cyan); }
+        .nav-links { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
+        .nav-item { display: flex; align-items: center; gap: 15px; padding: 15px 20px; color: var(--gray); text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.3s; cursor: pointer; }
+        .nav-item i { font-size: 1.2rem; width: 25px; text-align: center; }
+        .nav-item:hover, .nav-item.active { background: rgba(0, 206, 209, 0.1); color: var(--cyan); }
         
-        body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; min-height: 100vh; line-height: 1.6; }
-        .hidden { display: none !important; }
+        .main-content { flex-grow: 1; padding: 30px; overflow-y: auto; padding-bottom: 120px; display: none; }
+        .view-section { display: none; animation: fadeIn 0.4s ease forwards; }
+        .view-section.active { display: block; }
 
-        /* --- LOGIN --- */
-        #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 10000; }
-        .auth-card { background: var(--panel); padding: 40px; border-radius: 20px; border: 1px solid var(--cyan); width: 90%; max-width: 380px; text-align: center; }
+        /* --- BRAND HEADER --- */
+        .brand-header { font-family: var(--font-logo); margin-bottom: 30px; border-bottom: 1px solid rgba(0, 206, 209, 0.3); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .brand-header h1 { font-size: 2rem; letter-spacing: 2px; text-transform: uppercase; }
+        .brand-header span { color: var(--cyan); }
 
-        /* --- HEADER --- */
-        .header { height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: rgba(17,17,17,0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(0,206,209,0.1); }
-        .header h1 { font-family: 'Rajdhani'; font-size: 1.5rem; letter-spacing: 2px; }
-        .header span { color: var(--cyan); }
+        /* --- KPI & GRID --- */
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .kpi-box { text-align: center; border-top: 3px solid var(--cyan); }
+        .kpi-box .val { font-family: var(--font-logo); font-size: 2.5rem; margin-top: 10px; }
 
-        /* --- LIVE INDICATOR --- */
-        .live-status-container { padding: 20px; margin-top: 10px; }
-        .pulse-card { 
-            background: linear-gradient(135deg, #111 0%, #080808 100%);
-            border-radius: 20px; padding: 30px; text-align: center;
-            position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);
-            transition: 0.5s;
-        }
-        .pulse-card.active { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 206, 209, 0.2); }
+        /* --- UI ELEMENTS --- */
+        .card { background: var(--bg-panel); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; }
+        .form-control { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 8px; outline: none; margin-bottom: 15px; }
+        .btn-submit { width: 100%; background: var(--cyan); color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
         
-        .pulse-ring { 
-            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 100px; height: 100px; background: var(--cyan); border-radius: 50%; opacity: 0.3;
-        }
-        .active .pulse-ring { display: block; animation: ripple 2s infinite; }
-        @keyframes ripple {
-            0% { width: 0; height: 0; opacity: 0.5; }
-            100% { width: 500px; height: 500px; opacity: 0; }
-        }
-
-        /* --- CALENDAR --- */
-        .section-title { font-family: 'Rajdhani'; font-size: 1.2rem; color: var(--gray); margin: 30px 20px 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .calendar-wrap { background: var(--panel); margin: 0 20px; border-radius: 20px; padding: 20px; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-        .cal-header { font-size: 0.7rem; color: var(--gray); text-align: center; font-weight: bold; padding-bottom: 10px; }
-        .cal-day { 
-            aspect-ratio: 1; display: flex; align-items: center; justify-content: center; 
-            font-size: 0.9rem; border-radius: 10px; background: #000; cursor: pointer;
-            border: 1px solid transparent; transition: 0.3s;
-        }
-        .cal-day.worked { 
-            border-color: var(--cyan); color: var(--cyan); font-weight: bold;
-            box-shadow: inset 0 0 10px rgba(0,206,209,0.2);
-            animation: glow 2s infinite alternate;
-        }
-        @keyframes glow { from { box-shadow: 0 0 5px rgba(0,206,209,0.1); } to { box-shadow: 0 0 15px rgba(0,206,209,0.4); } }
-        .cal-day.selected { background: var(--cyan) !important; color: #000 !important; }
-
-        /* --- DAY DETAILS --- */
-        #day-details { margin: 15px 20px; padding: 20px; background: rgba(0,206,209,0.05); border-radius: 15px; border-left: 4px solid var(--cyan); display: none; }
-        .event-line { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-        /* --- LOGS --- */
-        .log-container { padding: 0 20px; }
-        .log-card { background: var(--panel); padding: 15px; border-radius: 15px; margin-bottom: 12px; border-left: 3px solid var(--cyan); display: flex; justify-content: space-between; align-items: center; }
-
-        /* --- REQUEST FORM --- */
-        .request-box { background: var(--panel); margin: 30px 20px 50px; padding: 25px; border-radius: 20px; border: 1px solid rgba(0,206,209,0.2); }
+        /* TIMER */
+        .timer-display { font-family: var(--font-logo); font-size: 4rem; text-align: center; color: var(--white); margin-top: 20px; }
+        .timer-controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .btn-timer { padding: 12px 20px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.3s; flex: 1; }
         
-        input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-family: inherit; outline: none; }
-        input:focus { border-color: var(--cyan); }
-        .btn { width: 100%; background: var(--cyan); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; font-family: 'Rajdhani'; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+        .cal-cell.has-work { border-color: var(--cyan); color: var(--cyan); }
+
+        .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(17,17,17,0.95); backdrop-filter: blur(10px); z-index: 1000; padding: 10px 0; }
+        @media (max-width: 900px) { .sidebar { display: none; } .bottom-nav { display: flex; justify-content: space-around; } .main-content { padding: 15px; } }
     </style>
 </head>
 <body>
 
-    <div id="auth-screen">
+    <div id="auth-overlay">
         <div class="auth-card">
-            <h2 style="font-family:'Rajdhani'; margin-bottom:25px; letter-spacing:2px;">ICONIC <span style="color:var(--cyan)">PORTAL</span></h2>
-            <input type="email" id="login-email" placeholder="E-Mail Adresse">
-            <input type="password" id="login-pass" placeholder="Passwort">
-            <button class="btn" id="login-btn" onclick="handleAuth()">Einloggen</button>
-            <p id="auth-error" style="color:var(--danger); font-size:0.8rem; margin-top:15px;"></p>
+            <h2 style="color: var(--white); font-family: var(--font-logo);">ICONIC<br><span style="color: var(--cyan);">ACCESS</span></h2>
+            <input type="email" id="auth-email" class="form-control" placeholder="E-Mail">
+            <input type="password" id="auth-password" class="form-control" placeholder="Passwort">
+            <button class="btn-submit" onclick="handleAuth()">Login / Register</button>
+            <p id="auth-error" style="color: var(--danger); font-size: 0.8rem; margin-top: 15px;"></p>
         </div>
     </div>
 
-    <div id="portal-content" class="hidden">
-        <div class="header">
-            <h1>ICONIC <span>PORTAL</span></h1>
-            <button onclick="logout()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-power-off"></i></button>
+    <aside class="sidebar">
+        <a href="#" class="logo">ICONIC<br><span>OS</span></a>
+        <div class="nav-links">
+            <div class="nav-item active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
+            <div class="nav-item" onclick="switchTab('work')"><i class="fa-solid fa-stopwatch"></i> Work / Timer</div>
+            <div class="nav-item" onclick="switchTab('finanzen')"><i class="fa-solid fa-wallet"></i> Finanzen</div>
+            <div class="nav-item" onclick="switchTab('crm')"><i class="fa-solid fa-users"></i> CRM / Kunden</div>
+            <div class="nav-item" onclick="logout()" style="margin-top: auto; color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</div>
+        </div>
+    </aside>
+
+    <main class="main-content" id="main-app">
+        <div class="brand-header">
+            <h1>ICONIC <span>VISUAL CONCEPTS</span></h1>
+            <div onclick="logout()" style="color: var(--danger); cursor: pointer;"><i class="fa-solid fa-right-from-bracket"></i></div>
         </div>
 
-        <div class="live-status-container">
-            <div id="pulse-card" class="pulse-card">
-                <div class="pulse-ring"></div>
-                <h4 id="live-label" style="font-family:'Rajdhani'; color:var(--gray); letter-spacing:2px;">SYSTEM STANDBY</h4>
-                <h2 id="live-project" style="font-family:'Rajdhani'; font-size:1.8rem; margin:10px 0;">BEREIT</h2>
-                <p id="live-desc" style="font-size:0.8rem; color:var(--gray);">Aktuell keine aktive Bearbeitung.</p>
+        <div id="view-dashboard" class="view-section active">
+            <div class="dash-grid">
+                <div class="card kpi-box"><label>Gewinn (Netto)</label><div id="dash-profit" class="val">0,00 €</div></div>
+                <div class="card kpi-box" style="border-top-color: var(--success);"><label>Brutto-Umsatz</label><div id="dash-revenue" class="val" style="color: var(--success);">0,00 €</div></div>
+            </div>
+            <div id="chartWrapper" class="card" style="height: 300px;">
+                <canvas id="mainChart"></canvas>
             </div>
         </div>
 
-        <h3 class="section-title">Dein Projekt-Kalender</h3>
-        <div class="calendar-wrap">
-            <div id="cal-month-name" style="text-align:center; font-weight:bold; margin-bottom:15px; color:var(--cyan)"></div>
-            <div class="calendar-grid" id="calendar"></div>
+        <div id="view-work" class="view-section">
+            <div class="card">
+                <h2 style="color: var(--cyan); margin-bottom: 20px;">Time Tracker</h2>
+                <select id="timer-partner-select" class="form-control"></select>
+                <input type="text" id="timer-project" class="form-control" placeholder="Projekt Name">
+                <div class="timer-display" id="display">00:00:00</div>
+                <div class="timer-controls">
+                    <button class="btn-timer" style="background:var(--success)" onclick="startTimer()" id="startBtn">Start</button>
+                    <button class="btn-timer" style="background:var(--danger); color:white; display:none;" onclick="stopAndBookTimer()" id="stopBtn">Stop</button>
+                </div>
+                <div class="calendar-grid" id="calendar-grid" style="margin-top: 30px;"></div>
+            </div>
         </div>
 
-        <div id="day-details">
-            <h4 id="detail-date" style="font-family:'Rajdhani'; color:var(--cyan); margin-bottom:10px;"></h4>
-            <div id="detail-events"></div>
+        <div id="view-finanzen" class="view-section">
+            <div class="card">
+                <h2>Buchung</h2>
+                <select id="txn-partner-select" class="form-control"></select>
+                <input type="number" id="amount" class="form-control" placeholder="Betrag €">
+                <button class="btn-submit" onclick="addTxnManual()">Buchen</button>
+            </div>
+            <div id="txnList"></div>
         </div>
 
-        <h3 class="section-title">Letzte Aktivitäten</h3>
-        <div class="log-container" id="log-list"></div>
-
-        <h3 class="section-title">Neue Anfrage senden</h3>
-        <div class="request-box">
-            <input type="text" id="req-title" placeholder="Betreff / Projektname">
-            <textarea id="req-msg" rows="4" placeholder="Beschreibe deine Änderung oder dein neues Anliegen..."></textarea>
-            <button class="btn" onclick="sendRequest()">Anfrage absenden</button>
+        <div id="view-crm" class="view-section">
+            <div class="card">
+                <h2>Kunde anlegen</h2>
+                <input type="text" id="crm-company" class="form-control" placeholder="Name (wie im Portal registriert)">
+                <input type="email" id="crm-email" class="form-control" placeholder="Email">
+                <button class="btn-submit" onclick="saveCustomer()">Kunde Speichern</button>
+            </div>
+            <div id="crmList"></div>
         </div>
-    </div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -145,153 +173,117 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Die Admin UID aus deinem CRM
-        const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2";
-        let userWorkLogs = [];
-
-        // AUTH LOGIK
-        window.handleAuth = async () => {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (e) {
-                document.getElementById('auth-error').innerText = "Zugangsdaten nicht korrekt.";
-            }
-        };
-
-        window.logout = () => signOut(auth).then(() => location.reload());
+        let userUid = null;
+        window.customers = [];
+        window.transactions = [];
+        window.workLogs = [];
 
         onAuthStateChanged(auth, (user) => {
-            if(user) {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('portal-content').classList.remove('hidden');
-                startPortalSync(user);
+            if (user) {
+                userUid = user.uid;
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                startSync();
+            } else {
+                document.getElementById('auth-overlay').style.display = 'flex';
             }
         });
 
-        function startPortalSync(user) {
-            const partnerName = user.displayName || user.email.split('@')[0];
-            const cleanName = partnerName.toLowerCase().replace(/\s/g, '');
-
-            // 1. LIVE STATUS PULSE
-            onSnapshot(doc(db, "global_status", "live"), (snap) => {
-                const data = snap.data();
-                const card = document.getElementById('pulse-card');
-                if(data && data.active && data.partner.toLowerCase().replace(/\s/g, '') === cleanName) {
-                    card.classList.add('active');
-                    document.getElementById('live-label').innerText = "LIVE IN BEARBEITUNG";
-                    document.getElementById('live-project').innerText = data.project.toUpperCase();
-                    document.getElementById('live-desc').innerText = "Dein Designer arbeitet gerade an diesem Projekt.";
-                } else {
-                    card.classList.remove('active');
-                    document.getElementById('live-label').innerText = "SYSTEM STANDBY";
-                    document.getElementById('live-project').innerText = "BEREIT";
-                    document.getElementById('live-desc').innerText = "Aktuell keine aktive Bearbeitung.";
-                }
+        function startSync() {
+            onSnapshot(collection(db, "users", userUid, "customers"), (snap) => {
+                window.customers = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderCRM();
+                updateSelects();
             });
-
-            // 2. WORKLOGS & KALENDER
-            onSnapshot(query(collection(db, "users", ADMIN_UID, "worklogs"), orderBy("date", "desc")), (snap) => {
-                userWorkLogs = snap.docs
-                    .map(d => d.data())
-                    .filter(l => l.partner.toLowerCase().replace(/\s/g, '') === cleanName);
-                
+            onSnapshot(query(collection(db, "users", userUid, "transactions"), orderBy("timestamp", "desc")), (snap) => {
+                window.transactions = snap.docs.map(d => d.data());
+                renderFinanzen();
+            });
+            onSnapshot(collection(db, "users", userUid, "worklogs"), (snap) => {
+                window.workLogs = snap.docs.map(d => d.data());
                 renderCalendar();
-                renderLogList();
             });
         }
 
-        function renderCalendar() {
-            const grid = document.getElementById('calendar');
-            grid.innerHTML = "";
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            
-            document.getElementById('cal-month-name').innerText = new Intl.DateTimeFormat('de-DE', {month:'long', year:'numeric'}).format(now);
-
-            // Wochentage Header
-            ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].forEach(d => {
-                grid.innerHTML += `<div class="cal-header">${d}</div>`;
-            });
-
-            const firstDay = (new Date(year, month, 1).getDay() + 6) % 7;
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            for(let i=0; i<firstDay; i++) grid.innerHTML += `<div></div>`;
-
-            for(let d=1; d<=daysInMonth; d++) {
-                const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-                const hasWork = userWorkLogs.some(l => l.date === dateStr);
-                
-                const dayEl = document.createElement('div');
-                dayEl.className = `cal-day ${hasWork ? 'worked' : ''}`;
-                dayEl.innerText = d;
-                dayEl.onclick = () => showDetails(dateStr, hasWork);
-                grid.appendChild(dayEl);
-            }
-        }
-
-        function showDetails(dateStr, hasWork) {
-            const detailBox = document.getElementById('day-details');
-            if(!hasWork) { detailBox.style.display = 'none'; return; }
-            
-            const logs = userWorkLogs.filter(l => l.date === dateStr);
-            detailBox.style.display = 'block';
-            document.getElementById('detail-date').innerText = new Date(dateStr).toLocaleDateString('de-DE', {day:'2-digit', month:'long'});
-            
-            let html = "";
-            logs.forEach(l => {
-                html += `<div style="margin-bottom:15px; border-bottom:1px solid rgba(0,206,209,0.1); padding-bottom:10px;">
-                            <div style="font-weight:bold; color:white; font-size:0.9rem;">${l.project}</div>
-                            <div style="font-size:0.7rem; color:var(--cyan); margin-bottom:8px;">DAUER: ${l.duration}</div>`;
-                if(l.events) {
-                    l.events.forEach(e => {
-                        html += `<div class="event-line"><span>${e.type}</span><span style="color:var(--gray)">${e.time} Uhr</span></div>`;
-                    });
-                }
-                html += `</div>`;
-            });
-            document.getElementById('detail-events').innerHTML = html;
-            detailBox.scrollIntoView({behavior:'smooth'});
-        }
-
-        function renderLogList() {
-            const container = document.getElementById('log-list');
-            if(userWorkLogs.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:var(--gray); font-size:0.8rem;">Noch keine Aktivitäten vorhanden.</p>`;
-                return;
-            }
-            container.innerHTML = userWorkLogs.slice(0, 5).map(l => `
-                <div class="log-card">
-                    <div>
-                        <div style="font-weight:600; font-size:0.9rem;">${l.project}</div>
-                        <div style="font-size:0.75rem; color:var(--gray);">${new Date(l.date).toLocaleDateString('de-DE')}</div>
-                    </div>
-                    <div style="font-family:'Rajdhani'; font-weight:700; color:var(--cyan);">${l.duration}</div>
-                </div>
-            `).join('');
-        }
-
-        window.sendRequest = async () => {
-            const title = document.getElementById('req-title').value;
-            const msg = document.getElementById('req-msg').value;
-            if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
-
-            const partnerName = auth.currentUser.displayName || auth.currentUser.email.split('@')[0];
-
-            await addDoc(collection(db, "requests"), {
-                title: title,
-                desc: msg,
-                partner: partnerName,
-                timestamp: Date.now()
-            });
-
-            alert("Deine Anfrage wurde direkt ins CRM übertragen!");
-            document.getElementById('req-title').value = "";
-            document.getElementById('req-msg').value = "";
+        window.saveCustomer = async () => {
+            const company = document.getElementById('crm-company').value;
+            const email = document.getElementById('crm-email').value;
+            await addDoc(collection(db, "users", userUid, "customers"), { company, email });
+            document.getElementById('crm-company').value = "";
         };
+
+        window.addTxnManual = async () => {
+            const amt = parseFloat(document.getElementById('amount').value);
+            const part = document.getElementById('txn-partner-select').value;
+            await addDoc(collection(db, "users", userUid, "transactions"), {
+                amount: amt, partner: part, timestamp: Date.now(), type: 'Einnahme', date: new Date().toLocaleDateString()
+            });
+        };
+
+        // TIMER LOGIK
+        let timerStart, timerInt;
+        window.startTimer = () => {
+            timerStart = Date.now();
+            timerInt = setInterval(() => {
+                const diff = Date.now() - timerStart;
+                document.getElementById('display').innerText = new Date(diff).toISOString().substr(11, 8);
+            }, 1000);
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'inline-block';
+        };
+
+        window.stopAndBookTimer = async () => {
+            clearInterval(timerInt);
+            const diff = Date.now() - timerStart;
+            const partner = document.getElementById('timer-partner-select').value;
+            const project = document.getElementById('timer-project').value;
+            
+            // Log für CRM
+            await addDoc(collection(db, "users", userUid, "worklogs"), {
+                partner, project, duration: (diff/3600000).toFixed(2), date: new Date().toISOString().split('T')[0]
+            });
+
+            // Sync zum Kundenportal (Über den Namen "Test" etc.)
+            await setDoc(doc(db, "projekte", partner), {
+                kunde: partner,
+                projektname: project,
+                status: "In Arbeit",
+                letztes_update: new Date().toLocaleDateString()
+            }, { merge: true });
+
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('display').innerText = "00:00:00";
+        };
+
+        // RENDER FUNKTIONEN
+        function renderCRM() {
+            document.getElementById('crmList').innerHTML = window.customers.map(c => `<div class="card">${c.company} (${c.email})</div>`).join('');
+        }
+        function updateSelects() {
+            const options = window.customers.map(c => `<option value="${c.company}">${c.company}</option>`).join('');
+            document.getElementById('timer-partner-select').innerHTML = options;
+            document.getElementById('txn-partner-select').innerHTML = options;
+        }
+        function renderFinanzen() {
+            document.getElementById('txnList').innerHTML = window.transactions.map(t => `<div class="card">${t.partner}: ${t.amount}€</div>`).join('');
+        }
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = "";
+            for(let i=1; i<=31; i++) {
+                grid.innerHTML += `<div class="cal-cell">${i}</div>`;
+            }
+        }
+        window.switchTab = (id) => {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-'+id).classList.add('active');
+        };
+        window.handleAuth = () => {
+            signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
+        };
+        window.logout = () => signOut(auth);
     </script>
 </body>
 </html>
+
