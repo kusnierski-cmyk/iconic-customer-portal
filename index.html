@@ -4,87 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ICONIC | Portal</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon-512.png">
-
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; padding: calc(20px + env(safe-area-inset-top)) 20px 50px 20px; max-width: 600px; margin: 0 auto; }
-        
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .auth-card { background: var(--panel); padding: 30px; border-radius: 20px; border: 1px solid var(--cyan); width: 100%; max-width: 400px; }
+        :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; }
+        body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
         .hidden { display: none; }
-
-        .header { font-family: 'Rajdhani'; font-size: 1.5rem; margin-bottom: 30px; border-bottom: 1px solid rgba(0,206,209,0.3); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .header span { color: var(--cyan); }
-        
-        .status-card { background: var(--panel); border-radius: 20px; padding: 40px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center; position: relative; overflow: hidden; }
-        .status-card.active { border-color: var(--cyan); animation: pulseGlow 2s infinite alternate; }
-        @keyframes pulseGlow { 0% { box-shadow: 0 0 10px rgba(0, 206, 209, 0.1); } 100% { box-shadow: 0 0 30px rgba(0, 206, 209, 0.4); border-color: #fff; } }
-        
+        .header { font-family: 'Rajdhani'; font-size: 1.5rem; margin-bottom: 30px; border-bottom: 1px solid rgba(0,206,209,0.3); padding-bottom: 15px; }
+        .status-card { background: var(--panel); border-radius: 20px; padding: 40px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center; }
+        .status-card.active { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 206, 209, 0.2); }
         .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .insight-card { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.03); text-align: center; }
-        
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; margin-bottom: 20px; }
-        .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border-radius: 6px; background: #080808; color: #444; border: 1px solid transparent; }
-        .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,206,209,0.2); background: rgba(0,206,209,0.1); }
-
-        .log-item { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 10px; font-size: 0.85rem; border-left: 3px solid var(--cyan); }
-        .log-meta { display: flex; justify-content: space-between; color: var(--gray); font-size: 0.75rem; margin-top: 5px; }
-
-        .form-section { background: var(--panel); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.03); margin-top: 30px; }
-        input, textarea { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-family: inherit; outline: none; }
-        input:focus { border-color: var(--cyan); }
-        .btn-send { width: 100%; background: var(--cyan); border: none; padding: 15px; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: 'Rajdhani'; color: #000; text-transform: uppercase; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 15px; border-radius: 15px; margin-bottom: 20px; }
+        .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border-radius: 6px; background: #080808; color: #333; }
+        .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); background: rgba(0,206,209,0.1); }
+        .log-item { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--cyan); font-size: 0.85rem; }
     </style>
 </head>
 <body>
-
-    <div id="auth-overlay">
-        <div class="auth-card">
-            <h2 style="font-family:'Rajdhani'; color:var(--white); margin-bottom:20px;">ICONIC <span style="color:var(--cyan)">PORTAL</span></h2>
-            <input type="email" id="email" placeholder="E-Mail">
-            <input type="password" id="pass" placeholder="Passwort">
-            <button class="btn-send" onclick="handleAuth()">Anmelden</button>
-            <p id="auth-error" style="color:var(--danger); font-size:0.75rem; margin-top:15px; text-align:center;"></p>
-        </div>
+    <div id="auth-overlay" style="padding: 20px; text-align: center;">
+        <h2 style="font-family:'Rajdhani'; margin-bottom:20px;">PORTAL LOGIN</h2>
+        <input type="email" id="email" placeholder="E-Mail" style="width:100%; padding:12px; margin-bottom:10px; background:#111; border:1px solid #333; color:#fff;">
+        <input type="password" id="pass" placeholder="Passwort" style="width:100%; padding:12px; margin-bottom:20px; background:#111; border:1px solid #333; color:#fff;">
+        <button onclick="handleAuth()" style="width:100%; padding:15px; background:var(--cyan); border:none; font-weight:bold; cursor:pointer;">ANMELDEN</button>
     </div>
 
     <div id="main-content" class="hidden">
-        <div class="header"><div>ICONIC <span>PORTAL</span></div><button onclick="logout()" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fa-solid fa-power-off"></i></button></div>
-        
+        <div class="header">ICONIC <span>PORTAL</span></div>
         <div id="status-card" class="status-card">
             <h2 id="status-title">SYSTEM STANDBY</h2>
             <p id="status-desc">Bereit für neue Aufgaben.</p>
         </div>
-
         <div class="insights-grid">
-            <div class="insight-card" style="grid-column: span 2;"><span id="insight-main-project">Daten werden geladen...</span></div>
-            <div class="insight-card"><span id="insight-days">0</span> Tage</div>
-            <div class="insight-card"><span id="insight-hours">0h</span> Zeit</div>
+            <div class="insight-card" style="grid-column: span 2;"><span id="insight-main-project">Kein aktives Projekt</span></div>
+            <div class="insight-card"><span id="insight-days" style="color:var(--cyan); font-weight:bold;">0</span> Tage</div>
+            <div class="insight-card"><span id="insight-hours" style="color:var(--cyan); font-weight:bold;">0h</span> Zeit</div>
         </div>
-
         <div class="calendar-grid" id="calendar"></div>
         <div id="log-details"></div>
-
-        <div class="form-section">
-            <h3 style="font-family:'Rajdhani'; margin-bottom:15px; color:var(--cyan)">ANFRAGE SENDEN</h3>
-            <input type="text" id="req-title" placeholder="Betreff / Projekt">
-            <textarea id="req-msg" rows="3" placeholder="Beschreibe dein Anliegen..."></textarea>
-            <button class="btn-send" onclick="sendRequest()">Senden</button>
-        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, query, addDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -98,146 +61,75 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        setPersistence(auth, browserLocalPersistence);
 
-        const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2"; 
-        let userDisplayName = "";
-
-        // Normalisierung wie im CRM
+        const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2";
         const normalize = (str) => str ? str.toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim() : "";
 
-        window.handleAuth = async () => {
-            const e = document.getElementById('email').value.trim();
+        window.handleAuth = () => {
+            const e = document.getElementById('email').value;
             const p = document.getElementById('pass').value;
-            try {
-                await signInWithEmailAndPassword(auth, e, p);
-            } catch (err) { document.getElementById('auth-error').innerText = "Login fehlgeschlagen."; }
+            signInWithEmailAndPassword(auth, e, p).catch(err => alert("Login Fehler"));
         };
-
-        window.logout = () => signOut(auth).then(() => location.reload());
 
         onAuthStateChanged(auth, (user) => {
             if(user) {
-                userDisplayName = user.displayName || "Kunde";
-                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('auth-overlay').classList.add('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
-                initPortal();
+                initPortal(user.displayName || "Kunde");
             }
         });
 
-        function initPortal() {
-            const userKey = normalize(userDisplayName);
+        function initPortal(userName) {
+            const userKey = normalize(userName);
 
-            // 1. Live Status Sync (global_status/live)
+            // 1. Live Status
             onSnapshot(doc(db, "global_status", "live"), (s) => {
                 const card = document.getElementById('status-card');
-                if(s.exists()) {
-                    const d = s.data();
-                    if(d.active && normalize(d.partner) === userKey) {
-                        card.classList.add('active');
-                        document.getElementById('status-title').innerText = "PROJEKT IN ARBEIT";
-                        document.getElementById('status-desc').innerText = d.project || "An deinem Projekt wird aktuell gearbeitet.";
-                        return;
-                    }
+                if(s.exists() && s.data().active && normalize(s.data().partner) === userKey) {
+                    card.classList.add('active');
+                    document.getElementById('status-title').innerText = "PROJEKT IN ARBEIT";
+                    document.getElementById('status-desc').innerText = s.data().project || "Wird bearbeitet...";
+                } else {
+                    card.classList.remove('active');
+                    document.getElementById('status-title').innerText = "SYSTEM STANDBY";
                 }
-                card.classList.remove('active');
-                document.getElementById('status-title').innerText = "SYSTEM STANDBY";
-                document.getElementById('status-desc').innerText = "Bereit für neue Aufgaben.";
             });
 
-            // 2. Worklogs Sync (users/ADMIN_UID/worklogs)
-            // Wir laden alle Logs und filtern nach Partner, genau wie dein CRM es macht
+            // 2. Worklogs & Kalender
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
-                const logs = snap.docs.map(d => d.data())
-                    .filter(l => normalize(l.partner) === userKey)
-                    .sort((a,b) => new Date(b.date) - new Date(a.date));
+                const logs = snap.docs.map(d => d.data()).filter(l => normalize(l.partner) === userKey);
                 
-                renderStats(logs);
+                // Kalender immer zeichnen
                 renderCalendar(logs);
-                renderDetails(logs);
+                
+                // Stats füllen
+                const uniqueDays = new Set(logs.map(l => l.date)).size;
+                document.getElementById('insight-days').innerText = uniqueDays;
+                
+                let totalMin = 0;
+                logs.forEach(l => {
+                    const parts = (l.duration || "0:0").split(':');
+                    totalMin += (parseInt(parts[0]) * 60) + parseInt(parts[1]);
+                });
+                document.getElementById('insight-hours').innerText = (totalMin / 60).toFixed(1) + "h";
+                if(logs.length > 0) document.getElementById('insight-main-project').innerText = logs[0].project;
             });
-        }
-
-        function renderStats(logs) {
-            const days = new Set(logs.map(l => l.date)).size;
-            document.getElementById('insight-days').innerText = days;
-            
-            let totalMin = 0;
-            logs.forEach(l => { 
-                if(l.duration && l.duration.includes(':')) { 
-                    const parts = l.duration.split(':').map(Number);
-                    if(parts.length === 3) totalMin += (parts[0] * 60) + parts[1]; // HH:MM:SS
-                    else if(parts.length === 2) totalMin += (parts[0] * 60) + parts[1]; // HH:MM
-                } 
-            });
-            document.getElementById('insight-hours').innerText = (totalMin / 60).toFixed(1) + "h";
-            document.getElementById('insight-main-project').innerText = logs.length > 0 ? logs[0].project : "Keine aktiven Projekte";
         }
 
         function renderCalendar(logs) {
             const grid = document.getElementById('calendar');
             grid.innerHTML = "";
-            const now = new Date();
-            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            
-            // Die Daten im CRM sind YYYY-MM-DD
+            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
             const workedDates = logs.map(l => l.date);
 
             for(let i = 1; i <= daysInMonth; i++) {
-                const dateStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
+                const dayStr = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
                 const div = document.createElement('div');
-                div.className = 'cal-day';
-                // Prüfe ob dieses Datum in den Logs vorkommt
-                if(workedDates.includes(dateStr)) {
-                    div.classList.add('worked');
-                }
+                div.className = 'cal-day' + (workedDates.includes(dayStr) ? ' worked' : '');
                 div.innerText = i;
                 grid.appendChild(div);
             }
         }
-
-        function renderDetails(logs) {
-            const container = document.getElementById('log-details');
-            if(logs.length === 0) {
-                container.innerHTML = "";
-                return;
-            }
-            container.innerHTML = '<h3 style="font-family:\'Rajdhani\'; margin:20px 0 10px 0; color:var(--gray); font-size:1rem;">LETZTE AKTIVITÄTEN</h3>';
-            logs.slice(0, 5).forEach(l => {
-                const item = document.createElement('div');
-                item.className = 'log-item';
-                item.innerHTML = `
-                    <div style="display:flex; justify-content:space-between">
-                        <strong>${l.project || 'Projekt'}</strong>
-                        <span style="color:var(--cyan)">${l.duration || '0:00'}</span>
-                    </div>
-                    <div class="log-meta">
-                        <span>${new Date(l.date).toLocaleDateString('de-DE')}</span>
-                        <span>${l.earned ? Number(l.earned).toFixed(2) : '0.00'} €</span>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        window.sendRequest = async () => {
-            const title = document.getElementById('req-title').value.trim();
-            const msg = document.getElementById('req-msg').value.trim();
-            if(!title || !msg) return alert("Bitte alle Felder ausfüllen.");
-            
-            try {
-                await addDoc(collection(db, "requests"), {
-                    title: title,
-                    desc: msg,
-                    partner: userDisplayName,
-                    status: "offen",
-                    timestamp: Date.now()
-                });
-                alert("Anfrage erfolgreich gesendet!");
-                document.getElementById('req-title').value = "";
-                document.getElementById('req-msg').value = "";
-            } catch (e) { alert("Sende-Fehler."); }
-        };
     </script>
 </body>
 </html>
