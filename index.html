@@ -168,14 +168,31 @@
                 }
             });
 
-            // Worklogs Sync
+            // Worklogs Sync mit verbesserter Datumserkennung
             const q = query(collection(db, "users", ADMIN_UID, "worklogs"), where("partner", "==", userCompany));
             onSnapshot(q, (snap) => {
-                const logs = snap.docs.map(d => d.data()).sort((a,b) => new Date(b.date) - new Date(a.date));
+                const logs = snap.docs.map(d => {
+                    const data = d.data();
+                    // Firebase Timestamp Erkennung
+                    if (data.date && typeof data.date !== 'string') {
+                        const ts = data.date.toDate ? data.date.toDate() : new Date(data.date);
+                        data.date = ts.toLocaleDateString('de-DE');
+                    }
+                    return data;
+                }).sort((a,b) => parseDate(b.date) - parseDate(a.date));
+                
                 renderStats(logs);
                 renderCalendar(logs);
                 renderDetails(logs);
             });
+        }
+
+        // Hilfsfunktion: Wandelt verschiedene Datums-Strings in ein echtes Date-Objekt um
+        function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            const parts = dateStr.split(/[.-]/);
+            if (parts[0].length === 4) return new Date(parts[0], parts[1]-1, parts[2]); // YYYY-MM-DD
+            return new Date(parts[2], parts[1]-1, parts[0]); // DD.MM.YYYY
         }
 
         function renderStats(logs) {
@@ -196,16 +213,18 @@
             const grid = document.getElementById('calendar');
             grid.innerHTML = "";
             const now = new Date();
-            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             
-            // Konvertiert alle Log-Daten in ein einheitliches Format zum Vergleich
+            // Worked Dates für Vergleich vereinheitlichen (Format: YYYY-MM-DD)
             const workedDates = logs.map(l => {
-                const d = new Date(l.date);
+                const d = parseDate(l.date);
                 return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
             });
 
             for(let i = 1; i <= daysInMonth; i++) {
-                const dateStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+                const dateStr = `${currentYear}-${(currentMonth+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
                 const day = document.createElement('div');
                 day.className = `cal-day ${workedDates.includes(dateStr) ? 'worked' : ''}`;
                 day.innerText = i;
@@ -243,11 +262,10 @@
             if(!title || !msg) return alert("Bitte füllen Sie beide Felder aus.");
             
             try {
-                // HIER GEÄNDERT: Feldnamen angepasst für CRM-Kompatibilität
                 await addDoc(collection(db, "requests"), {
-                    kunde: userCompany, // CRM nutzt oft "kunde" statt "partner"
-                    titel: title,       // CRM nutzt "titel"
-                    nachricht: msg,     // CRM nutzt "nachricht"
+                    kunde: userCompany, 
+                    titel: title,       
+                    nachricht: msg,     
                     status: "neu",
                     datum: new Date().toLocaleDateString('de-DE'),
                     timestamp: serverTimestamp()
@@ -260,4 +278,3 @@
     </script>
 </body>
 </html>
-
