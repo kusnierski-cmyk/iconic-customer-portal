@@ -4,80 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ICONIC | Customer Portal</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        :root {
-            --cyan: #00CED1; --bg: #050505; --panel: #111111;
-            --white: #ffffff; --gray: #888888; --success: #2ed573; --danger: #ff4757;
-        }
-
+        :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            background-color: var(--bg); color: var(--white); 
-            font-family: 'Montserrat', sans-serif; padding: 20px;
-            max-width: 600px; margin: 0 auto; padding-bottom: 50px;
-        }
-
-        /* --- AUTH OVERLAY --- */
-        #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--bg); z-index: 9999; display: flex; 
-            align-items: center; justify-content: center; padding: 20px;
-        }
-        .auth-card {
-            background: var(--panel); padding: 30px; border-radius: 20px; 
-            border: 1px solid var(--cyan); width: 100%; max-width: 400px;
-        }
+        body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; padding-bottom: 50px; }
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: var(--panel); padding: 30px; border-radius: 20px; border: 1px solid var(--cyan); width: 100%; max-width: 400px; }
         .auth-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; color: var(--gray); border-bottom: 2px solid transparent; font-family: 'Rajdhani'; font-weight: 700; }
         .auth-tab.active { color: var(--cyan); border-color: var(--cyan); }
         .hidden { display: none; }
-
-        /* --- UI COMPONENTS --- */
-        .header { 
-            font-family: 'Rajdhani', sans-serif; font-size: 1.5rem; letter-spacing: 2px; 
-            margin-bottom: 30px; border-bottom: 1px solid rgba(0, 206, 209, 0.3); 
-            padding-bottom: 15px; text-align: center; display: flex; justify-content: space-between; align-items: center;
-        }
+        .header { font-family: 'Rajdhani'; font-size: 1.5rem; margin-bottom: 30px; border-bottom: 1px solid rgba(0,206,209,0.3); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .header span { color: var(--cyan); }
-        #user-display { font-size: 0.8rem; color: var(--gray); display: block; margin-top: 5px; font-family: 'Montserrat'; letter-spacing: 0; }
-
-        .status-card { 
-            background: var(--panel); border-radius: 20px; padding: 40px 20px; 
-            border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center;
-            transition: 0.5s;
-        }
-        .status-card.active { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 206, 209, 0.2); }
-        
-        .pulse-dot { 
-            width: 12px; height: 12px; background: var(--cyan); border-radius: 50%; 
-            margin: 0 auto 15px; display: none; position: relative;
-        }
-        .active .pulse-dot { display: block; }
-        .active .pulse-dot::after {
-            content: ''; position: absolute; width: 100%; height: 100%;
-            background: var(--cyan); border-radius: 50%; animation: pulse 2s infinite; left: 0;
-        }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(4); opacity: 0; } }
-
+        .status-card { background: var(--panel); border-radius: 20px; padding: 40px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center; }
+        .status-card.active { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0,206,209,0.2); }
         .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .insight-card { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.03); }
-        .insight-card i { color: var(--cyan); margin-bottom: 8px; display: block; }
-        .insight-val { font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; color: var(--white); display: block; }
-        .insight-label { font-size: 0.6rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
-
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: var(--panel); padding: 12px; border-radius: 15px; }
         .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border-radius: 6px; background: #080808; color: #444; }
-        .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); font-weight: 700; cursor: pointer; }
-        .cal-day.active-sel { background: var(--cyan); color: #000; }
-
-        .log-card { background: var(--panel); border-left: 4px solid var(--cyan); padding: 15px; border-radius: 10px; margin-bottom: 12px; }
-        input, textarea, select { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-family: inherit; outline: none; }
-        .btn-send { width: 100%; background: var(--cyan); border: none; padding: 15px; border-radius: 8px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-family: 'Rajdhani', sans-serif; color: #000; }
-        .logout-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2rem; }
+        .cal-day.worked { border: 1px solid var(--cyan); color: var(--cyan); font-weight: 700; }
+        input, textarea { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-family: inherit; }
+        .btn-send { width: 100%; background: var(--cyan); border: none; padding: 15px; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: 'Rajdhani'; color: #000; }
     </style>
 </head>
 <body>
@@ -88,75 +37,32 @@
                 <div class="auth-tab active" id="tab-login" onclick="toggleAuth('login')">LOGIN</div>
                 <div class="auth-tab" id="tab-register" onclick="toggleAuth('register')">REGISTRIEREN</div>
             </div>
-            
-            <input type="email" id="email" placeholder="E-Mail">
+            <input type="email" id="email" placeholder="E-Mail" autocomplete="email">
             <input type="password" id="pass" placeholder="Passwort">
-
             <div id="register-fields" class="hidden">
-                <input type="text" id="reg-company" placeholder="Firmenname (Exakt wie im CRM)">
+                <input type="text" id="reg-company" placeholder="Firmenname">
                 <input type="password" id="pass2" placeholder="Passwort wiederholen">
-                <label style="font-size: 0.7rem; color: var(--gray); display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
-                    <input type="checkbox" id="privacy" style="width: auto; margin: 0;"> Ich akzeptiere die Datenschutzbestimmungen
-                </label>
             </div>
-
             <button class="btn-send" onclick="handleAuth()" id="auth-btn">Anmelden</button>
-            <p id="auth-error" style="color: var(--danger); font-size: 0.7rem; margin-top: 10px; text-align: center;"></p>
+            <p id="auth-error" style="color: var(--danger); font-size: 0.75rem; margin-top: 15px; text-align: center; font-weight: 600;"></p>
         </div>
     </div>
 
     <div id="main-content" class="hidden">
-        <div class="header">
-            <div>
-                ICONIC <span>PORTAL</span>
-                <span id="user-display"></span>
-            </div>
-            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i></button>
-        </div>
-
-        <div id="status-card" class="status-card">
-            <div class="pulse-dot"></div>
-            <h2 id="status-title">SYSTEM STANDBY</h2>
-            <p id="status-desc">Keine aktive Bearbeitung.</p>
-        </div>
-
+        <div class="header"><div>ICONIC <span>PORTAL</span></div><button onclick="logout()" style="background:none; border:none; color:var(--danger); font-size: 1.2rem;"><i class="fa-solid fa-power-off"></i></button></div>
+        <div id="status-card" class="status-card"><h2 id="status-title">SYSTEM STANDBY</h2><p id="status-desc">Bereit.</p></div>
         <div class="insights-grid">
-            <div class="insight-card" style="grid-column: span 2;">
-                <i class="fa-solid fa-rocket"></i>
-                <span id="insight-main-project" class="insight-val">Analysiere...</span>
-                <span class="insight-label">Aktueller Fokus</span>
-            </div>
-            <div class="insight-card">
-                <i class="fa-solid fa-calendar-day"></i>
-                <span id="insight-days" class="insight-val">0</span>
-                <span class="insight-label">Aktive Tage</span>
-            </div>
-            <div class="insight-card">
-                <i class="fa-solid fa-clock"></i>
-                <span id="insight-hours" class="insight-val">0h</span>
-                <span class="insight-label">Zeit-Invest (Mo.)</span>
-            </div>
+            <div class="insight-card" style="grid-column: span 2;"><span id="insight-main-project">Kein Projekt aktiv</span></div>
+            <div class="insight-card"><span id="insight-days">0</span> Tage</div>
+            <div class="insight-card"><span id="insight-hours">0h</span> Zeit</div>
         </div>
-
         <div class="calendar-grid" id="calendar"></div>
-
-        <div id="log-details" style="margin-top: 20px; display: none;">
-            <h3 id="selected-date" style="font-family: 'Rajdhani'; color: var(--cyan); margin-bottom: 10px;"></h3>
-            <div id="log-list"></div>
-        </div>
-
-        <div style="background: var(--panel); padding: 20px; border-radius: 15px; margin-top: 30px;">
-            <h3 style="font-family: 'Rajdhani'; margin-bottom: 15px;">NEUE ANFRAGE</h3>
-            <input type="text" id="req-title" placeholder="Worum geht es?">
-            <textarea id="req-desc" rows="3" placeholder="Details..."></textarea>
-            <button class="btn-send" onclick="sendRequest()">Senden</button>
-        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, getDocs, query, where, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -170,158 +76,76 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        const ADMIN_UID = "689489453527";
         let userCompany = "";
-        let workLogs = [];
         let authMode = 'login';
 
-        window.toggleAuth = (mode) => {
-            authMode = mode;
-            document.getElementById('tab-login').classList.toggle('active', mode === 'login');
-            document.getElementById('tab-register').classList.toggle('active', mode === 'register');
-            document.getElementById('register-fields').classList.toggle('hidden', mode === 'login');
-            document.getElementById('auth-btn').innerText = mode === 'login' ? 'Anmelden' : 'Konto erstellen';
+        // UI Toggle
+        window.toggleAuth = (m) => {
+            authMode = m;
+            document.getElementById('tab-login').className = m === 'login' ? 'auth-tab active' : 'auth-tab';
+            document.getElementById('tab-register').className = m === 'register' ? 'auth-tab active' : 'auth-tab';
+            document.getElementById('register-fields').classList.toggle('hidden', m === 'login');
+            document.getElementById('auth-btn').innerText = m === 'login' ? 'Anmelden' : 'Registrieren';
             document.getElementById('auth-error').innerText = "";
         };
 
+        const showPortal = (user) => {
+            if(!user) return;
+            userCompany = user.displayName || "Kunde";
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('main-content').classList.remove('hidden');
+            initPortal();
+        };
+
         window.handleAuth = async () => {
-            const email = document.getElementById('email').value.trim();
-            const pass = document.getElementById('pass').value;
+            const e = document.getElementById('email').value.trim();
+            const p = document.getElementById('pass').value;
             const err = document.getElementById('auth-error');
             
+            if(!e || !p) { err.innerText = "Bitte Felder ausfüllen."; return; }
             err.style.color = "var(--cyan)";
-            err.innerText = "Verarbeitung...";
-
-            if(!email || !pass) {
-                err.style.color = "var(--danger)";
-                err.innerText = "E-Mail oder Passwort fehlt.";
-                return;
-            }
+            err.innerText = "Verbindung zu Google...";
 
             try {
                 if(authMode === 'login') {
-                    await signInWithEmailAndPassword(auth, email, pass);
+                    const res = await signInWithEmailAndPassword(auth, e, p);
+                    showPortal(res.user);
                 } else {
-                    const company = document.getElementById('reg-company').value.trim();
-                    const pass2 = document.getElementById('pass2').value;
-                    if(!company || !document.getElementById('privacy').checked) throw new Error("Daten unvollständig.");
-                    if(pass !== pass2) throw new Error("Passwörter nicht gleich.");
-                    
-                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                    await updateProfile(cred.user, { displayName: company });
-                    // Kein Reload! Der Auth-Listener oben regelt den Wechsel automatisch.
+                    const comp = document.getElementById('reg-company').value.trim();
+                    if(!comp) throw new Error("Firmenname fehlt.");
+                    const res = await createUserWithEmailAndPassword(auth, e, p);
+                    await updateProfile(res.user, { displayName: comp });
+                    // Seite neu laden um DisplayName im Auth-State zu festigen
+                    location.reload();
                 }
-            } catch (e) { 
-                console.error("Auth Error:", e);
+            } catch (error) { 
                 err.style.color = "var(--danger)";
-                if(e.code === 'auth/wrong-password') err.innerText = "Passwort falsch.";
-                else if(e.code === 'auth/user-not-found') err.innerText = "Konto nicht gefunden.";
-                else err.innerText = "Fehler: " + (e.code || e.message); 
+                err.innerText = error.code === 'auth/invalid-credential' ? "Daten falsch." : error.message; 
             }
         };
 
-        window.logout = () => signOut(auth);
+        window.logout = () => signOut(auth).then(() => location.reload());
 
-        onAuthStateChanged(auth, (user) => {
-            if(user) {
-                userCompany = user.displayName || "Kunde";
-                document.getElementById('user-display').innerText = userCompany;
-                document.getElementById('auth-overlay').classList.add('hidden');
-                document.getElementById('main-content').classList.remove('hidden');
-                initPortal();
-            } else {
-                document.getElementById('auth-overlay').classList.remove('hidden');
-                document.getElementById('main-content').classList.add('hidden');
-            }
-        });
+        // Automatischer Login-Check beim Start
+        onAuthStateChanged(auth, (user) => { if(user) showPortal(user); });
 
         function initPortal() {
-            onSnapshot(doc(db, "global_status", "live"), (snap) => {
-                const data = snap.data();
+            // Live Status Abfrage
+            onSnapshot(doc(db, "global_status", "live"), (s) => {
+                if(!s.exists()) return;
+                const d = s.data();
                 const card = document.getElementById('status-card');
-                if(data && data.active && data.partner === userCompany) {
+                if(d.active && d.partner === userCompany) {
                     card.classList.add('active');
                     document.getElementById('status-title').innerText = "LIVE IN PROGRESS";
-                    document.getElementById('status-desc').innerText = "Wir arbeiten an: " + data.project;
+                    document.getElementById('status-desc').innerText = "Bearbeitung: " + d.project;
                 } else {
                     card.classList.remove('active');
                     document.getElementById('status-title').innerText = "SYSTEM STANDBY";
-                    document.getElementById('status-desc').innerText = "Keine aktive Bearbeitung.";
+                    document.getElementById('status-desc').innerText = "Momentan keine aktive Bearbeitung.";
                 }
-            });
-            loadWorkLogs();
+            }, (error) => { console.error("Firestore Error:", error); });
         }
-
-        async function loadWorkLogs() {
-            try {
-                const q = query(collection(db, "users", ADMIN_UID, "worklogs"), where("partner", "==", userCompany));
-                const snap = await getDocs(q);
-                workLogs = snap.docs.map(d => d.data());
-                renderCalendar();
-                renderInsights();
-            } catch (e) { console.error(e); }
-        }
-
-        function renderInsights() {
-            const currentMonth = new Date().getMonth();
-            const monthlyLogs = workLogs.filter(l => l.date && new Date(l.date).getMonth() === currentMonth);
-            document.getElementById('insight-days').innerText = new Set(monthlyLogs.map(l => l.date)).size;
-            const totalHours = monthlyLogs.reduce((acc, l) => {
-                if(!l.duration) return acc;
-                const parts = l.duration.split(':');
-                return acc + parseInt(parts[0]) + (parseInt(parts[1])/60);
-            }, 0);
-            document.getElementById('insight-hours').innerText = totalHours.toFixed(1) + "h";
-            const projects = {};
-            monthlyLogs.forEach(l => projects[l.project] = (projects[l.project] || 0) + 1);
-            const main = Object.keys(projects).length > 0 ? Object.keys(projects).reduce((a, b) => projects[a] > projects[b] ? a : b) : "Kein Fokus";
-            document.getElementById('insight-main-project').innerText = main;
-        }
-
-        window.renderCalendar = () => {
-            const grid = document.getElementById('calendar');
-            if(!grid) return;
-            grid.innerHTML = "";
-            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-            for(let i=1; i<=daysInMonth; i++) {
-                const dateStr = `${new Date().getFullYear()}-${(new Date().getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
-                const hasWork = workLogs.some(l => l.date === dateStr);
-                const day = document.createElement('div');
-                day.className = `cal-day ${hasWork ? 'worked' : ''}`;
-                day.innerText = i;
-                if(hasWork) day.onclick = () => showDay(dateStr, day);
-                grid.appendChild(day);
-            }
-        };
-
-        window.showDay = (dateStr, el) => {
-            document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('active-sel'));
-            el.classList.add('active-sel');
-            const logs = workLogs.filter(l => l.date === dateStr);
-            document.getElementById('log-details').style.display = "block";
-            document.getElementById('selected-date').innerText = "BERICHT " + new Date(dateStr).toLocaleDateString('de-DE');
-            document.getElementById('log-list').innerHTML = logs.map(l => `
-                <div class="log-card">
-                    <strong>${l.project}</strong><br>
-                    <span style="font-size:0.7rem; color:var(--gray)">Dauer: ${l.duration}</span>
-                </div>
-            `).join('');
-        };
-
-        window.sendRequest = async () => {
-            const t = document.getElementById('req-title').value;
-            const d = document.getElementById('req-desc').value;
-            if(!t || !d) return alert("Bitte ausfüllen.");
-            await addDoc(collection(db, "requests"), { 
-                title: t, 
-                desc: d, 
-                partner: userCompany, 
-                timestamp: Date.now() 
-            });
-            alert("Anfrage gesendet!");
-            document.getElementById('req-title').value = ""; document.getElementById('req-desc').value = "";
-        };
     </script>
 </body>
 </html>
