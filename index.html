@@ -18,7 +18,7 @@
         .hidden { display: none; }
         .header { font-family: 'Rajdhani'; font-size: 1.5rem; margin-bottom: 30px; border-bottom: 1px solid rgba(0,206,209,0.3); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .header span { color: var(--cyan); }
-        .status-card { background: var(--panel); border-radius: 20px; padding: 40px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center; }
+        .status-card { background: var(--panel); border-radius: 20px; padding: 40px 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px; text-align: center; transition: 0.5s; }
         .status-card.active { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 206, 209, 0.2); }
         .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
         .insight-card { background: var(--panel); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.03); }
@@ -76,7 +76,10 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const ADMIN_UID = "689489453527";
+        
+        // KORREKTUR: ADMIN_UID muss mit der ID im CRM übereinstimmen
+        const ADMIN_UID = "6y8P9lG8uYUrXvV9T6vW8eE2lFh2"; 
+        
         let userCompany = "";
         let authMode = 'login';
 
@@ -127,11 +130,11 @@
         onAuthStateChanged(auth, (user) => { if(user) showPortal(user); });
 
         async function initPortal() {
-            // 1. LIVE STATUS (Snapshot für Echtzeit)
+            // 1. LIVE STATUS
             onSnapshot(doc(db, "global_status", "live"), (s) => {
+                const card = document.getElementById('status-card');
                 if(!s.exists()) return;
                 const d = s.data();
-                const card = document.getElementById('status-card');
                 if(d.active && d.partner === userCompany) {
                     card.classList.add('active');
                     document.getElementById('status-title').innerText = "LIVE IN PROGRESS";
@@ -143,7 +146,7 @@
                 }
             });
 
-            // 2. WORKLOGS LADEN
+            // 2. WORKLOGS & KALENDER
             try {
                 const q = query(
                     collection(db, "users", ADMIN_UID, "worklogs"),
@@ -153,10 +156,8 @@
                 const snap = await getDocs(q);
                 const logs = snap.docs.map(d => d.data());
                 
-                if(logs.length > 0) {
-                    renderStats(logs);
-                    renderCalendar(logs);
-                }
+                renderStats(logs);
+                renderCalendar(logs);
             } catch (e) {
                 console.error("Daten-Fehler:", e);
             }
@@ -174,7 +175,11 @@
                 }
             });
             document.getElementById('insight-hours').innerText = (totalMin / 60).toFixed(1) + "h";
-            document.getElementById('insight-main-project').innerText = logs[logs.length-1].project || "Aktiv";
+            
+            if(logs.length > 0) {
+                const lastProject = logs[logs.length - 1].project;
+                document.getElementById('insight-main-project').innerText = lastProject || "Aktiv";
+            }
         }
 
         function renderCalendar(logs) {
