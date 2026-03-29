@@ -105,12 +105,21 @@
             <p style="text-align:center; color:var(--gray); font-size:0.8rem;">Suche Aktivitäten...</p>
         </div>
 
-        <h3 class="section-title">Neue Anfrage</h3>
+                <h3 class="section-title">Dateien & Anfrage</h3>
         <div class="request-box">
+            <div id="drive-area" class="hidden" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                <p style="font-size: 0.7rem; color: var(--gray); margin-bottom: 10px; text-transform: uppercase;">Dein Projekt-Ordner</p>
+                <button onclick="window.open(window.customerDriveLink, '_blank')" style="background: rgba(255,255,255,0.05); border: 1px solid #333; color: #fff; padding: 12px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;">
+                    <i class="fa-brands fa-google-drive" style="color: #34a853; font-size: 1.4rem;"></i>
+                    <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">DATEIEN ÖFFNEN</span>
+                </button>
+            </div>
+
             <input type="text" id="req-title" placeholder="Betreff">
             <textarea id="req-msg" rows="4" placeholder="Deine Nachricht..."></textarea>
             <button class="btn" onclick="sendRequest()">Anfrage senden</button>
         </div>
+
     </div>
 
     <script type="module">
@@ -178,6 +187,21 @@
 
         function startSync(clientName) {
             const cleanName = clientName.toLowerCase().trim();
+            // Drive-Link aus dem CRM-Datenbestand laden
+            const fetchDriveLink = async () => {
+                const crmQuery = query(collection(db, "users", ADMIN_UID, "customers"), where("email", "==", auth.currentUser.email));
+                const crmSnap = await getDocs(crmQuery);
+                crmSnap.forEach((doc) => {
+                    const customerData = doc.data();
+                    if (customerData.drive) {
+                        window.customerDriveLink = customerData.drive;
+                        document.getElementById('drive-area').classList.remove('hidden');
+                    }
+                });
+            };
+            fetchDriveLink();
+
+
 
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
