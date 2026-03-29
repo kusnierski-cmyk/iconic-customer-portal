@@ -189,18 +189,28 @@
             const cleanName = clientName.toLowerCase().trim();
             // Drive-Link aus dem CRM-Datenbestand laden
             const fetchDriveLink = async () => {
-                const crmQuery = query(
-                    collection(db, "users", ADMIN_UID, "customers"), 
-                    where("email", "==", auth.currentUser.email)
-                );
-                const crmSnap = await getDocs(crmQuery);
-                crmSnap.forEach((doc) => {
-                    const customerData = doc.data();
-                    if (customerData.drive) {
-                        window.customerDriveLink = customerData.drive;
-                        document.getElementById('drive-area').classList.remove('hidden');
-                    }
-                });
+                try {
+                    // Wir suchen im CRM-Pfad nach der E-Mail des Kunden
+                    const crmQuery = query(
+                        collection(db, "users", ADMIN_UID, "customers"), 
+                        where("email", "==", auth.currentUser.email)
+                    );
+                    const crmSnap = await getDocs(crmQuery);
+                    
+                    crmSnap.forEach((doc) => {
+                        const customerData = doc.data();
+                        if (customerData.drive) {
+                            // Link global speichern und Bereich anzeigen
+                            window.customerDriveLink = customerData.drive;
+                            const driveArea = document.getElementById('drive-area');
+                            if (driveArea) {
+                                driveArea.classList.remove('hidden');
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.error("Fehler beim Laden des Drive-Links:", e);
+                }
             };
             fetchDriveLink();
 
