@@ -105,19 +105,39 @@
             <p style="text-align:center; color:var(--gray); font-size:0.8rem;">Suche Aktivitäten...</p>
         </div>
 
-                <h3 class="section-title">Dateien & Anfrage</h3>
+        <h3 class="section-title">Service & Kontakt</h3>
         <div class="request-box">
-            <div id="drive-area" class="hidden" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">
-                <p style="font-size: 0.7rem; color: var(--gray); margin-bottom: 10px; text-transform: uppercase;">Dein Projekt-Ordner</p>
-                <button onclick="window.open(window.customerDriveLink, '_blank')" style="background: rgba(255,255,255,0.05); border: 1px solid #333; color: #fff; padding: 12px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;">
+            <div id="drive-area" class="hidden" style="margin-bottom: 12px;">
+                <button onclick="window.open(window.customerDriveLink, '_blank')" style="background: rgba(52, 168, 83, 0.1); border: 1px solid rgba(52, 168, 83, 0.3); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
                     <i class="fa-brands fa-google-drive" style="color: #34a853; font-size: 1.4rem;"></i>
-                    <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">DATEIEN ÖFFNEN</span>
+                    <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">PROJEKT-DATEIEN</span>
                 </button>
             </div>
 
-            <input type="text" id="req-title" placeholder="Betreff">
-            <textarea id="req-msg" rows="4" placeholder="Deine Nachricht..."></textarea>
-            <button class="btn" onclick="sendRequest()">Anfrage senden</button>
+            <div style="margin-bottom: 12px;">
+                <button onclick="window.location.href='https://wa.me/4915207369806?text=Hallo%20ICONIC,%20ich%20habe%20eine%20Frage%20zu%20meinem%20Projekt!'" style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.3); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
+                    <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 1.5rem;"></i>
+                    <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">WHATSAPP CHAT</span>
+                </button>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <button onclick="window.location.href='mailto:iconicvisualconcepts@outlook.de?subject=Anfrage über Kundenportal'" style="background: rgba(0, 206, 209, 0.1); border: 1px solid rgba(0, 206, 209, 0.3); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
+                    <i class="fa-solid fa-envelope" style="color: var(--cyan); font-size: 1.3rem;"></i>
+                    <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">E-MAIL SENDEN</span>
+                </button>
+            </div>
+
+            <div>
+                <button onclick="window.location.href='tel:015207369806'" style="background: rgba(46, 213, 115, 0.1); border: 1px solid rgba(46, 213, 115, 0.3); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
+                    <i class="fa-solid fa-phone" style="color: #2ed573; font-size: 1.2rem;"></i>
+                    <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">JETZT ANRUFEN</span>
+                </button>
+            </div>
+        </div>
+
+
+
         </div>
 
     </div>
@@ -211,7 +231,7 @@
                 console.log("Drive-Hinweis: Link wird noch synchronisiert.");
             }
         };
-        fetchDriveLink();
+            fetchDriveLink();
 
 
 
@@ -274,45 +294,7 @@
             });
         }
 
-                                window.sendRequest = async () => {
-            const titleInput = document.getElementById('req-title').value; 
-            const msgInput = document.getElementById('req-msg').value;
-            
-            if(!titleInput || !msgInput) return alert("Bitte fülle alle Felder aus.");
-
-            try {
-                // Wir suchen in der Collection "users" nach der E-Mail des aktuell eingeloggten Nutzers
-                const userQuery = query(collection(db, "users"), where("email", "==", auth.currentUser.email));
-                const querySnapshot = await getDocs(userQuery);
-                
-                let firmenName = auth.currentUser.email; // Fallback, falls kein Eintrag gefunden wird
-
-                // Wenn ein Dokument mit dieser E-Mail gefunden wurde, nimm die 'company'
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (data.company) {
-                        firmenName = data.company;
-                    }
-                });
-
-                // Absenden an das CRM
-                await addDoc(collection(db, "requests"), {
-                    title: firmenName, // Firmenname als fette Überschrift
-                    desc: "BETREFF: " + titleInput + "\n\nNACHRICHT: " + msgInput,
-                    partner: firmenName,
-                    email: auth.currentUser.email,
-                    timestamp: new Date().toISOString(),
-                    status: "offen"
-                });
-
-                alert("Anfrage gesendet!");
-                document.getElementById('req-title').value = "";
-                document.getElementById('req-msg').value = "";
-            } catch (e) {
-                console.error("Fehler:", e);
-                alert("Fehler beim Senden: " + e.message);
-            }
-        };
+                                
 
 
 
