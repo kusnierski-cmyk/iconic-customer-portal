@@ -236,16 +236,28 @@
         }
 
         window.sendRequest = async () => {
-            const title = document.getElementById('req-title').value;
-            const msg = document.getElementById('req-msg').value;
-            if(!title || !msg) return alert("Felder ausfüllen");
-            await addDoc(collection(db, "requests"), {
-                title, desc: msg, partner: auth.currentUser.displayName, timestamp: Date.now(), status: "offen"
-            });
-            alert("Gesendet!");
-            document.getElementById('req-title').value = "";
-            document.getElementById('req-msg').value = "";
-        };
+    const title = document.getElementById('req-title').value;
+    const msg = document.getElementById('req-msg').value;
+    
+    if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
+
+    try {
+        await addDoc(collection(db, "requests"), {
+            title: title,
+            desc: msg,
+            partner: auth.currentUser.displayName || auth.currentUser.email,
+            email: auth.currentUser.email,
+            timestamp: new Date().toISOString(),
+            status: "offen"
+        });
+        alert("Anfrage gesendet!");
+        document.getElementById('req-title').value = "";
+        document.getElementById('req-msg').value = "";
+    } catch (e) {
+        alert("Fehler: " + e.message);
+    }
+};
+
     </script>
 </body>
 </html>
