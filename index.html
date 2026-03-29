@@ -236,27 +236,31 @@
             });
         }
 
-                                window.sendRequest = async () => {
+                        window.sendRequest = async () => {
             const titleInput = document.getElementById('req-title').value; 
             const msgInput = document.getElementById('req-msg').value;
-            if(!titleInput || !msgInput) return alert("Felder ausfüllen");
+            
+            if(!titleInput || !msgInput) return alert("Bitte fülle alle Felder aus.");
 
             try {
-                // Wir suchen in der Collection "users" nach der E-Mail des Kunden
-                const { query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-                const q = query(collection(db, "users"), where("email", "==", auth.currentUser.email));
-                const querySnapshot = await getDocs(q);
+                // Wir holen den Firmennamen aus dem User-Profil
+                const userDocRef = doc(db, "users", auth.currentUser.uid);
+                const userSnap = await getDoc(userDocRef);
                 
-                let firmenName = auth.currentUser.email; // Standard, falls nichts gefunden wird
+                let firmenName = "Unbekannter Kunde";
+                if (userSnap.exists()) {
+                    firmenName = userSnap.data().company || auth.currentUser.displayName || auth.currentUser.email;
+                }
 
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (data.company) firmenName = data.company;
-                });
-
+                // Absenden an die Collection "requests"
                 await addDoc(collection(db, "requests"), {
+                    // Der Firmenname wird zum Haupt-Titel im CRM
                     title: firmenName, 
+                    
+                    // Betreff und Nachricht werden im Textfeld kombiniert
                     desc: "BETREFF: " + titleInput + "\n\nNACHRICHT: " + msgInput,
+                    
+                    // Diese Felder sind für deine Datenbank-Logik
                     partner: firmenName,
                     email: auth.currentUser.email,
                     timestamp: new Date().toISOString(),
@@ -264,6 +268,8 @@
                 });
 
                 alert("Anfrage gesendet!");
+                
+                // Formular leeren
                 document.getElementById('req-title').value = "";
                 document.getElementById('req-msg').value = "";
             } catch (e) {
@@ -273,8 +279,6 @@
         };
 
 
-
     </script>
 </body>
 </html>
-
