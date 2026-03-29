@@ -187,32 +187,32 @@
 
         function startSync(clientName) {
             const cleanName = clientName.toLowerCase().trim();
-            // Drive-Link aus dem CRM-Datenbestand laden
-            const fetchDriveLink = async () => {
-                try {
-                    // Wir suchen im CRM-Pfad nach der E-Mail des Kunden
-                    const crmQuery = query(
-                        collection(db, "users", ADMIN_UID, "customers"), 
-                        where("email", "==", auth.currentUser.email)
-                    );
-                    const crmSnap = await getDocs(crmQuery);
-                    
-                    crmSnap.forEach((doc) => {
-                        const customerData = doc.data();
-                        if (customerData.drive) {
-                            // Link global speichern und Bereich anzeigen
-                            window.customerDriveLink = customerData.drive;
-                            const driveArea = document.getElementById('drive-area');
-                            if (driveArea) {
-                                driveArea.classList.remove('hidden');
-                            }
-                        }
-                    });
-                } catch (e) {
-                    console.error("Fehler beim Laden des Drive-Links:", e);
+        const fetchDriveLink = async () => {
+            try {
+                // 1. Versuch: In der Kundenliste des Admins suchen
+                const crmQuery = query(collection(db, "users", ADMIN_UID, "customers"), where("email", "==", auth.currentUser.email));
+                const crmSnap = await getDocs(crmQuery);
+                
+                let foundLink = null;
+                crmSnap.forEach((doc) => { if(doc.data().drive) foundLink = doc.data().drive; });
+
+                // 2. Versuch: Falls nichts gefunden (wegen Rechten), in der User-Sammlung suchen
+                if (!foundLink) {
+                    const uQuery = query(collection(db, "users"), where("email", "==", auth.currentUser.email));
+                    const uSnap = await getDocs(uQuery);
+                    uSnap.forEach((doc) => { if(doc.data().drive) foundLink = doc.data().drive; });
                 }
-            };
-            fetchDriveLink();
+
+                if (foundLink) {
+                    window.customerDriveLink = foundLink;
+                    document.getElementById('drive-area').classList.remove('hidden');
+                }
+            } catch (e) {
+                console.log("Drive-Hinweis: Link wird noch synchronisiert.");
+            }
+        };
+        fetchDriveLink();
+
 
 
 
