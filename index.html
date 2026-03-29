@@ -189,7 +189,10 @@
             const cleanName = clientName.toLowerCase().trim();
             // Drive-Link aus dem CRM-Datenbestand laden
             const fetchDriveLink = async () => {
-                const crmQuery = query(collection(db, "users", ADMIN_UID, "customers"), where("email", "==", auth.currentUser.email));
+                const crmQuery = query(
+                    collection(db, "users", ADMIN_UID, "customers"), 
+                    where("email", "==", auth.currentUser.email)
+                );
                 const crmSnap = await getDocs(crmQuery);
                 crmSnap.forEach((doc) => {
                     const customerData = doc.data();
