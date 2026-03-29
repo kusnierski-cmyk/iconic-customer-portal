@@ -116,7 +116,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -235,28 +236,44 @@
             });
         }
 
-        window.sendRequest = async () => {
-    const title = document.getElementById('req-title').value;
-    const msg = document.getElementById('req-msg').value;
-    
-    if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
+                window.sendRequest = async () => {
+            const title = document.getElementById('req-title').value;
+            const msg = document.getElementById('req-msg').value;
+            
+            if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
 
-    try {
-        await addDoc(collection(db, "requests"), {
-            title: title,
-            desc: msg,
-            partner: auth.currentUser.displayName || auth.currentUser.email,
-            email: auth.currentUser.email,
-            timestamp: new Date().toISOString(),
-            status: "offen"
-        });
-        alert("Anfrage gesendet!");
-        document.getElementById('req-title').value = "";
-        document.getElementById('req-msg').value = "";
-    } catch (e) {
-        alert("Fehler: " + e.message);
-    }
-};
+            try {
+                // Wir laden die Profildaten des Users aus der "users" Collection
+                const userDocRef = doc(db, "users", auth.currentUser.uid);
+                const userSnap = await getDoc(userDocRef);
+                
+                let customerName = auth.currentUser.displayName || auth.currentUser.email;
+
+                // Falls das Dokument existiert und ein Company-Feld hat, nehmen wir das
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    if (userData.company) {
+                        customerName = userData.company;
+                    }
+                }
+
+                await addDoc(collection(db, "requests"), {
+                    title: title,
+                    desc: msg,
+                    partner: customerName, // Hier steht jetzt der Name aus "company"
+                    email: auth.currentUser.email,
+                    timestamp: new Date().toISOString(),
+                    status: "offen"
+                });
+
+                alert("Anfrage gesendet! Absender: " + customerName);
+                    document.getElementById('req-title').value = "";
+                document.getElementById('req-msg').value = "";
+            } catch (e) {
+                console.error(e);
+                alert("Fehler beim Senden: " + e.message);
+            }
+        };
 
     </script>
 </body>
