@@ -239,39 +239,36 @@
                 window.sendRequest = async () => {
             const title = document.getElementById('req-title').value;
             const msg = document.getElementById('req-msg').value;
-            
             if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
 
             try {
-                // Wir laden die Profildaten des Users aus der "users" Collection
+                // Wir versuchen, die 'company' Info aus der Datenbank zu holen
                 const userDocRef = doc(db, "users", auth.currentUser.uid);
                 const userSnap = await getDoc(userDocRef);
                 
+                // Priorität: 1. Feld 'company', 2. Feld 'name', 3. Firebase DisplayName, 4. E-Mail
                 let customerName = auth.currentUser.displayName || auth.currentUser.email;
-
-                // Falls das Dokument existiert und ein Company-Feld hat, nehmen wir das
+                
                 if (userSnap.exists()) {
                     const userData = userSnap.data();
-                    if (userData.company) {
-                        customerName = userData.company;
-                    }
+                    customerName = userData.company || userData.name || customerName;
                 }
 
                 await addDoc(collection(db, "requests"), {
                     title: title,
                     desc: msg,
-                    partner: customerName, // Hier steht jetzt der Name aus "company"
+                    partner: customerName, 
                     email: auth.currentUser.email,
                     timestamp: new Date().toISOString(),
                     status: "offen"
                 });
 
-                alert("Anfrage gesendet! Absender: " + customerName);
-                    document.getElementById('req-title').value = "";
+                alert("Anfrage gesendet!");
+                document.getElementById('req-title').value = "";
                 document.getElementById('req-msg').value = "";
             } catch (e) {
                 console.error(e);
-                alert("Fehler beim Senden: " + e.message);
+                alert("Fehler beim Senden.");
             }
         };
 
