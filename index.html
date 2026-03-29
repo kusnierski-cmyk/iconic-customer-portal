@@ -236,34 +236,40 @@
             });
         }
 
-                window.sendRequest = async () => {
-            const title = document.getElementById('req-title').value;
-            const msg = document.getElementById('req-msg').value;
-            if(!title || !msg) return alert("Bitte fülle alle Felder aus.");
+                        window.sendRequest = async () => {
+            const titleInput = document.getElementById('req-title').value; 
+            const msgInput = document.getElementById('req-msg').value;
+            
+            if(!titleInput || !msgInput) return alert("Bitte fülle alle Felder aus.");
 
             try {
-                // Wir versuchen, die 'company' Info aus der Datenbank zu holen
+                // Wir holen den Firmennamen aus dem User-Profil
                 const userDocRef = doc(db, "users", auth.currentUser.uid);
                 const userSnap = await getDoc(userDocRef);
                 
-                // Priorität: 1. Feld 'company', 2. Feld 'name', 3. Firebase DisplayName, 4. E-Mail
-                let customerName = auth.currentUser.displayName || auth.currentUser.email;
-                
+                let firmenName = "Unbekannter Kunde";
                 if (userSnap.exists()) {
-                    const userData = userSnap.data();
-                    customerName = userData.company || userData.name || customerName;
+                    firmenName = userSnap.data().company || auth.currentUser.displayName || auth.currentUser.email;
                 }
 
+                // Absenden an die Collection "requests"
                 await addDoc(collection(db, "requests"), {
-                    title: title,
-                    desc: msg,
-                    partner: customerName, 
+                    // Der Firmenname wird zum Haupt-Titel im CRM
+                    title: firmenName, 
+                    
+                    // Betreff und Nachricht werden im Textfeld kombiniert
+                    desc: "BETREFF: " + titleInput + "\n\nNACHRICHT: " + msgInput,
+                    
+                    // Diese Felder sind für deine Datenbank-Logik
+                    partner: firmenName,
                     email: auth.currentUser.email,
                     timestamp: new Date().toISOString(),
                     status: "offen"
                 });
 
                 alert("Anfrage gesendet!");
+                
+                // Formular leeren
                 document.getElementById('req-title').value = "";
                 document.getElementById('req-msg').value = "";
             } catch (e) {
@@ -271,6 +277,7 @@
                 alert("Fehler beim Senden.");
             }
         };
+
 
     </script>
 </body>
