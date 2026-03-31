@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; }
+        :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; --success: #2ed573; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; min-height: 100vh; }
         .hidden { display: none !important; }
@@ -52,8 +52,21 @@
         .log-container { padding: 0 20px; }
         .log-card { 
             background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; 
-            border-left: 4px solid var(--cyan); display: flex; justify-content: space-between; align-items: center;
+            border-left: 4px solid var(--cyan); display: block; 
         }
+
+        /* --- PAYMENT STATUS STYLES --- */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .status-unpaid { background: rgba(255, 71, 87, 0.15); color: var(--danger); border: 1px solid var(--danger); }
+        .status-paid { background: rgba(46, 213, 115, 0.15); color: var(--success); border: 1px solid var(--success); }
 
         .request-box { background: var(--panel); margin: 0 20px 50px; padding: 25px; border-radius: 20px; border: 1px solid rgba(0,206,209,0.1); }
         input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-family: inherit; outline: none; }
@@ -137,19 +150,12 @@
             </div>
         </div>
 
-
-
-
-        </div>
-
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -209,34 +215,25 @@
 
         function startSync(clientName) {
             const cleanName = clientName.toLowerCase().trim();
-        const fetchDriveLink = async () => {
-            try {
-                // 1. Versuch: In der Kundenliste des Admins suchen
-                const crmQuery = query(collection(db, "users", ADMIN_UID, "customers"), where("email", "==", auth.currentUser.email));
-                const crmSnap = await getDocs(crmQuery);
-                
-                let foundLink = null;
-                crmSnap.forEach((doc) => { if(doc.data().drive) foundLink = doc.data().drive; });
-
-                // 2. Versuch: Falls nichts gefunden (wegen Rechten), in der User-Sammlung suchen
-                if (!foundLink) {
-                    const uQuery = query(collection(db, "users"), where("email", "==", auth.currentUser.email));
-                    const uSnap = await getDocs(uQuery);
-                    uSnap.forEach((doc) => { if(doc.data().drive) foundLink = doc.data().drive; });
-                }
-
-                if (foundLink) {
-                    window.customerDriveLink = foundLink;
-                    document.getElementById('drive-area').classList.remove('hidden');
-                }
-            } catch (e) {
-                console.log("Drive-Hinweis: Link wird noch synchronisiert.");
-            }
-        };
+            
+            const fetchDriveLink = async () => {
+                try {
+                    const crmQuery = query(collection(db, "users", ADMIN_UID, "customers"), where("email", "==", auth.currentUser.email));
+                    const crmSnap = await getDocs(crmQuery);
+                    let foundLink = null;
+                    crmSnap.forEach((doc) => { if(doc.data().drive) foundLink = doc.data().drive; });
+                    if (!foundLink) {
+                        const uQuery = query(collection(db, "users"), where("email", "==", auth.currentUser.email));
+                        const uSnap = await getDocs(uQuery);
+                        uSnap.forEach((doc) => { if(doc.data().drive) foundLink = doc.data().drive; });
+                    }
+                    if (foundLink) {
+                        window.customerDriveLink = foundLink;
+                        document.getElementById('drive-area').classList.remove('hidden');
+                    }
+                } catch (e) { console.log("Drive-Hinweis: Link wird noch synchronisiert."); }
+            };
             fetchDriveLink();
-
-
-
 
             onSnapshot(doc(db, "global_status", "live"), (snap) => {
                 const data = snap.data();
@@ -275,31 +272,33 @@
                     const startTime = log.events?.find(e => e.type === 'Start')?.time || '--:--';
                     const pauseTime = log.events?.find(e => e.type === 'Pause')?.time || 'Keine';
                     const price = log.earned ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(log.earned) : '0,00 €';
+                    
+                    // --- NEU: ZAHLUNGSSTATUS LOGIK ---
+                    const statusClass = log.isPaid ? 'status-paid' : 'status-unpaid';
+                    const statusText = log.isPaid ? 'Bezahlt' : 'Noch nicht bezahlt';
 
                     container.innerHTML += `
                         <div class="log-card">
-                            <div style="flex: 1; padding-right: 15px;">
-                                <div style="font-weight:600;">${log.project || 'Aufgabe'}</div>
-                                <div style="font-size:0.75rem; color:var(--gray); margin-bottom: 5px;">${log.desc || ''}</div>
-                                <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">
-                                    <i class="fa-regular fa-calendar"></i> ${d} | 
-                                    <i class="fa-regular fa-clock"></i> Start: ${startTime} | 
-                                    <i class="fa-solid fa-pause"></i> Pause: ${pauseTime}
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="flex: 1; padding-right: 15px;">
+                                    <div style="font-weight:600;">${log.project || 'Aufgabe'}</div>
+                                    <div style="font-size:0.75rem; color:var(--gray); margin-bottom: 5px;">${log.desc || ''}</div>
+                                    <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">
+                                        <i class="fa-regular fa-calendar"></i> ${d} | 
+                                        <i class="fa-regular fa-clock"></i> Start: ${startTime} | 
+                                        <i class="fa-solid fa-pause"></i> Pause: ${pauseTime}
+                                    </div>
                                 </div>
-                            </div>
-                            <div style="text-align:right">
-                                <div style="color:var(--cyan); font-weight:700;">${price}</div>
-                                <div style="font-size:0.7rem; color:var(--gray);">${log.duration || '00:00'}</div>
+                                <div style="text-align:right">
+                                    <div style="color:var(--cyan); font-weight:700;">${price}</div>
+                                    <div style="font-size:0.7rem; color:var(--gray);">${log.duration || '00:00'}</div>
+                                </div>
                             </div>
                         </div>`;
                 });
             });
         }
-
-                                
-
-
-
     </script>
 </body>
 </html>
