@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; }
+        :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; --success: #2ed573; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg); color: var(--white); font-family: 'Montserrat', sans-serif; min-height: 100vh; }
         .hidden { display: none !important; }
@@ -24,16 +24,18 @@
         .header h1 { font-family: 'Rajdhani'; font-size: 1.5rem; letter-spacing: 2px; }
         .header span { color: var(--cyan); }
 
+        /* --- MODAL STYLES --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: var(--panel); border: 1px solid var(--cyan); border-radius: 20px; width: 100%; max-width: 500px; padding: 30px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .close-modal { position: absolute; top: 20px; right: 20px; color: var(--gray); font-size: 1.5rem; cursor: pointer; }
+
         .pulse-card { 
             background: linear-gradient(135deg, #111 0%, #080808 100%);
             border-radius: 20px; padding: 30px; text-align: center; margin: 20px;
             position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);
             transition: all 0.4s ease;
         }
-        .pulse-card.active { 
-            border-color: var(--cyan); 
-            animation: card-breathe 1.5s infinite alternate; 
-        }
+        .pulse-card.active { border-color: var(--cyan); animation: card-breathe 1.5s infinite alternate; }
         .active-pulse { display: none; width: 14px; height: 14px; background: #fff; border-radius: 50%; margin: 0 auto 15px; }
         .active .active-pulse { display: block; animation: core-pulse 1.2s infinite; }
         
@@ -50,14 +52,15 @@
         .section-title { font-family: 'Rajdhani'; font-size: 1.2rem; color: var(--gray); margin: 30px 20px 15px; text-transform: uppercase; letter-spacing: 1px; }
         
         .log-container { padding: 0 20px; }
-        .log-card { 
-            background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; 
-            border-left: 4px solid var(--cyan); display: flex; justify-content: space-between; align-items: center;
-        }
+        .log-card { background: var(--panel); padding: 18px; border-radius: 15px; margin-bottom: 12px; border-left: 4px solid var(--cyan); cursor: pointer; transition: 0.2s; }
+        .log-card:active { transform: scale(0.98); background: #1a1a1a; }
+
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; }
+        .status-unpaid { background: rgba(255, 71, 87, 0.15); color: var(--danger); border: 1px solid var(--danger); }
+        .status-paid { background: rgba(46, 213, 115, 0.15); color: var(--success); border: 1px solid var(--success); }
 
         .request-box { background: var(--panel); margin: 0 20px 50px; padding: 25px; border-radius: 20px; border: 1px solid rgba(0,206,209,0.1); }
         input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-family: inherit; outline: none; }
-        input:focus, textarea:focus { border-color: var(--cyan); }
         .btn { width: 100%; background: var(--cyan); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; font-family: 'Rajdhani'; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; }
 
         #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 10000; }
@@ -66,6 +69,36 @@
     </style>
 </head>
 <body>
+
+    <!-- DETAIL MODAL -->
+    <div id="detail-modal" class="modal-overlay" onclick="closeDetailModal()">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <i class="fa-solid fa-xmark close-modal" onclick="closeDetailModal()"></i>
+            <div id="modal-status-area"></div>
+            <h2 id="modal-project" style="font-family:'Rajdhani'; color:var(--cyan); margin-bottom:5px;"></h2>
+            <p id="modal-date" style="color:var(--gray); font-size:0.8rem; margin-bottom:20px;"></p>
+            
+            <div id="modal-time-area" style="background: #000; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                <p style="color:var(--gray); font-size:0.7rem; text-transform:uppercase; margin-bottom:10px;">Zeit-Verlauf</p>
+                <div id="modal-events-list"></div>
+                <div style="border-top: 1px solid #222; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between;">
+                    <span style="color:var(--gray); font-size:0.8rem;">Gesamtdauer:</span>
+                    <strong id="modal-duration" style="color:var(--white);"></strong>
+                </div>
+            </div>
+
+            <div id="modal-desc-area" style="margin-bottom: 20px;">
+                <p style="color:var(--gray); font-size:0.7rem; text-transform:uppercase; margin-bottom:5px;">Beschreibung</p>
+                <p id="modal-desc" style="font-size:0.9rem; line-height:1.4;"></p>
+            </div>
+
+            <div id="modal-payment-area" style="background: rgba(0, 206, 209, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0, 206, 209, 0.1);">
+                <p style="color:var(--cyan); font-size:0.7rem; text-transform:uppercase; margin-bottom:5px;">Abrechnung & Info</p>
+                <h3 id="modal-price" style="font-family:'Rajdhani'; font-size:1.5rem; margin-bottom:5px;"></h3>
+                <p id="modal-payment-info" style="font-size:0.8rem; color:var(--white); font-style:italic;"></p>
+            </div>
+        </div>
+    </div>
 
     <div id="auth-screen">
         <div class="auth-card">
@@ -107,28 +140,24 @@
 
         <h3 class="section-title">Service & Kontakt</h3>
         <div class="request-box">
-            
             <div id="drive-area" class="hidden" style="margin-bottom: 12px;">
                 <button onclick="window.open(window.customerDriveLink, '_blank')" style="background: rgba(0, 206, 209, 0.05); border: 1px solid rgba(0, 206, 209, 0.2); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
                     <i class="fa-brands fa-google-drive" style="color: var(--cyan); font-size: 1.4rem;"></i>
                     <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">PROJEKT-DATEIEN</span>
                 </button>
             </div>
-
             <div style="margin-bottom: 12px;">
                 <button onclick="window.location.href='https://wa.me/4915207369806?text=Hallo%20ICONIC,%20ich%20habe%20eine%20Frage%20zu%20meinem%20Projekt!'" style="background: var(--panel); border: 1px solid rgba(255,255,255,0.05); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
                     <i class="fa-brands fa-whatsapp" style="color: var(--cyan); font-size: 1.5rem;"></i>
                     <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">WHATSAPP CHAT</span>
                 </button>
             </div>
-
             <div style="margin-bottom: 12px;">
                 <button onclick="window.location.href='mailto:iconicvisualconcepts@outlook.de?subject=Anfrage über Kundenportal'" style="background: var(--panel); border: 1px solid rgba(255,255,255,0.05); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
                     <i class="fa-solid fa-envelope" style="color: var(--cyan); font-size: 1.3rem;"></i>
                     <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">E-MAIL SENDEN</span>
                 </button>
             </div>
-
             <div>
                 <button onclick="window.location.href='tel:015207369806'" style="background: var(--panel); border: 1px solid rgba(255,255,255,0.05); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
                     <i class="fa-solid fa-phone" style="color: var(--cyan); font-size: 1.2rem;"></i>
@@ -141,7 +170,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -158,6 +187,7 @@
 
         const ADMIN_UID = "wn9blxkhF7UbSfv0gnqW3EDb1zx2"; 
         let isLoginMode = true;
+        let globalCombinedItems = [];
 
         window.toggleAuthMode = () => {
             isLoginMode = !isLoginMode;
@@ -173,23 +203,58 @@
             const email = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-pass').value;
             const privacyChecked = document.getElementById('privacy-check').checked;
-
             try {
-                if (isLoginMode) {
-                    await signInWithEmailAndPassword(auth, email, pass);
-                } else {
+                if (isLoginMode) { await signInWithEmailAndPassword(auth, email, pass); } 
+                else {
                     if(!name) throw new Error("Name fehlt.");
                     if(!privacyChecked) throw new Error("Bitte akzeptiere die Datenschutzbestimmungen.");
                     const userCred = await createUserWithEmailAndPassword(auth, email, pass);
                     await updateProfile(userCred.user, { displayName: name });
                 }
                 location.reload();
-            } catch (e) {
-                document.getElementById('auth-error').innerText = "Fehler: " + e.message;
-            }
+            } catch (e) { document.getElementById('auth-error').innerText = "Fehler: " + e.message; }
         };
 
         window.logout = () => signOut(auth).then(() => location.reload());
+
+        window.openDetailModal = (id) => {
+            const item = globalCombinedItems.find(i => i.id === id);
+            if (!item) return;
+            
+            document.getElementById('modal-project').innerText = item.project || item.partner || 'Eintrag';
+            document.getElementById('modal-date').innerText = item.displayDate || '';
+            document.getElementById('modal-desc').innerText = item.desc || item.info || 'Keine Beschreibung vorhanden.';
+            document.getElementById('modal-price').innerText = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(item.earned || item.amount || 0);
+            
+            const statusArea = document.getElementById('modal-status-area');
+            const paymentInfo = document.getElementById('modal-payment-info');
+            const timeArea = document.getElementById('modal-time-area');
+            
+            if(item.type === 'transaction') {
+                statusArea.innerHTML = `<span class="status-badge status-paid">Gebucht</span>`;
+                paymentInfo.innerText = "Direktbuchung im System hinterlegt.";
+                timeArea.style.display = 'none';
+                document.getElementById('modal-duration').innerText = '-';
+            } else {
+                timeArea.style.display = 'block';
+                const statusText = item.isPaid ? 'Bezahlt' : 'Noch nicht bezahlt';
+                const statusClass = item.isPaid ? 'status-paid' : 'status-unpaid';
+                statusArea.innerHTML = `<span class="status-badge ${statusClass}">${statusText}</span>`;
+                paymentInfo.innerText = item.paymentInfo || 'Keine zusätzlichen Zahlungsinformationen.';
+                document.getElementById('modal-duration').innerText = item.duration || '00:00';
+                const eventsList = document.getElementById('modal-events-list');
+                eventsList.innerHTML = item.events ? item.events.map(ev => `
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; padding:5px 0; border-bottom:1px solid #111;">
+                        <span style="color:var(--gray)">${ev.type}:</span>
+                        <span style="color:var(--cyan); font-family:'Rajdhani'; font-weight:600;">${ev.time} Uhr</span>
+                    </div>
+                `).join('') : '<p style="color:var(--gray); font-size:0.8rem;">Keine Zeitstempel vorhanden.</p>';
+            }
+
+            document.getElementById('detail-modal').style.display = 'flex';
+        };
+
+        window.closeDetailModal = () => { document.getElementById('detail-modal').style.display = 'none'; };
 
         onAuthStateChanged(auth, (user) => {
             if(user) {
@@ -201,20 +266,12 @@
 
         function startSync(clientName) {
             const cleanName = clientName.toLowerCase().trim();
-            let allWorkLogs = [];
-            let allTransactions = [];
-
             const fetchDriveLink = async () => {
                 try {
                     const crmQuery = query(collection(db, "users", ADMIN_UID, "customers"), where("email", "==", auth.currentUser.email));
                     const crmSnap = await getDocs(crmQuery);
                     let foundLink = null;
                     crmSnap.forEach((doc) => { if(doc.data().drive) foundLink = doc.data().drive; });
-                    if (!foundLink) {
-                        const uQuery = query(collection(db, "users"), where("email", "==", auth.currentUser.email));
-                        const uSnap = await getDocs(uQuery);
-                        uSnap.forEach((doc) => { if(doc.data().drive) foundLink = doc.data().drive; });
-                    }
                     if (foundLink) {
                         window.customerDriveLink = foundLink;
                         document.getElementById('drive-area').classList.remove('hidden');
@@ -242,78 +299,76 @@
                 }
             });
 
-            const renderCombinedList = () => {
-                const container = document.getElementById('all-activities');
-                let combined = [...allWorkLogs, ...allTransactions];
-                
-                combined.sort((a, b) => {
-                    let dateA = a.isTxn ? a.date.split('.').reverse().join('-') : a.date;
-                    let dateB = b.isTxn ? b.date.split('.').reverse().join('-') : b.date;
-                    return dateB.localeCompare(dateA);
-                });
+            let workLogs = [];
+            let transactions = [];
 
-                if(combined.length === 0) {
+            const renderList = () => {
+                const container = document.getElementById('all-activities');
+                globalCombinedItems = [...workLogs, ...transactions];
+                globalCombinedItems.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
+
+                if(globalCombinedItems.length === 0) {
                     container.innerHTML = `<p style="text-align:center; color:var(--gray); padding:20px;">Keine Einträge für "${clientName}" gefunden.</p>`;
                     return;
                 }
 
                 container.innerHTML = "";
-                combined.forEach(item => {
+                globalCombinedItems.forEach(item => {
+                    const isPaid = item.type === 'transaction' || item.isPaid;
+                    const statusClass = isPaid ? 'status-paid' : 'status-unpaid';
+                    const statusText = item.type === 'transaction' ? 'Gebucht' : (item.isPaid ? 'Bezahlt' : 'Offen');
                     const price = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(item.earned || item.amount || 0);
-                    
-                    if (item.isTxn) {
-                        container.innerHTML += `
-                            <div class="log-card" style="border-left-color: var(--white); opacity: 0.9;">
+
+                    container.innerHTML += `
+                        <div class="log-card" onclick="openDetailModal('${item.id}')">
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                 <div style="flex: 1; padding-right: 15px;">
-                                    <div style="font-weight:600;">BUCHUNG / ZAHLUNG</div>
-                                    <div style="font-size:0.75rem; color:var(--gray); margin-bottom: 5px;">${item.info || 'Zahlungseingang'}</div>
-                                    <div style="font-size:0.75rem; color:var(--gray); mt:4px;">
-                                        <i class="fa-regular fa-calendar"></i> ${item.date} | Direktbuchung
+                                    <div style="font-weight:600;">${item.project || 'Zahlung/Buchung'}</div>
+                                    <div style="font-size:0.75rem; color:var(--gray);">
+                                        <i class="fa-regular fa-calendar"></i> ${item.displayDate} ${item.duration ? '| <i class="fa-regular fa-clock"></i> ' + item.duration : ''}
                                     </div>
                                 </div>
                                 <div style="text-align:right">
                                     <div style="color:var(--cyan); font-weight:700;">${price}</div>
-                                    <div style="font-size:0.7rem; color:var(--gray);">BELEGT</div>
+                                    <div style="font-size:0.7rem; color:var(--gray);"><i class="fa-solid fa-chevron-right"></i></div>
                                 </div>
-                            </div>`;
-                    } else {
-                        const d = item.date ? item.date.split('-').reverse().join('.') : "Info";
-                        const startTime = item.events?.find(e => e.type === 'Start')?.time || '--:--';
-                        container.innerHTML += `
-                            <div class="log-card">
-                                <div style="flex: 1; padding-right: 15px;">
-                                    <div style="font-weight:600;">${item.project || 'Aufgabe'}</div>
-                                    <div style="font-size:0.75rem; color:var(--gray); margin-bottom: 5px;">${item.desc || ''}</div>
-                                    <div style="font-size:0.75rem; color:var(--gray); mt:4px;">
-                                        <i class="fa-regular fa-calendar"></i> ${d} | 
-                                        <i class="fa-regular fa-clock"></i> Start: ${startTime}
-                                    </div>
-                                </div>
-                                <div style="text-align:right">
-                                    <div style="color:var(--cyan); font-weight:700;">${price}</div>
-                                    <div style="font-size:0.7rem; color:var(--gray);">${item.duration || '00:00'}</div>
-                                </div>
-                            </div>`;
-                    }
+                            </div>
+                        </div>`;
                 });
             };
 
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
-                allWorkLogs = snap.docs.map(d => d.data()).filter(l => l.partner && l.partner.toLowerCase().trim() === cleanName);
-                renderCombinedList();
+                workLogs = snap.docs.map(d => {
+                    const data = d.data();
+                    return { 
+                        id: d.id, ...data, type: 'worklog', 
+                        sortDate: data.date || "", 
+                        displayDate: data.date ? data.date.split('-').reverse().join('.') : "Info"
+                    };
+                }).filter(l => l.partner && l.partner.toLowerCase().trim() === cleanName);
+                renderList();
             });
 
             onSnapshot(collection(db, "users", ADMIN_UID, "transactions"), (snap) => {
-                allTransactions = snap.docs.map(d => ({...d.data(), isTxn: true})).filter(t => t.type === 'Einnahme' && t.partner && t.partner.toLowerCase().trim() === cleanName);
-                renderCombinedList();
+                transactions = snap.docs.map(d => {
+                    const data = d.data();
+                    // Konvertiere DD.MM.YYYY zu YYYY-MM-DD für Sortierung
+                    const parts = data.date ? data.date.split('.') : [];
+                    const sDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : "";
+                    return { 
+                        id: d.id, ...data, type: 'transaction', 
+                        sortDate: sDate, 
+                        displayDate: data.date || "Info"
+                    };
+                }).filter(t => t.type === 'Einnahme' && t.partner && t.partner.toLowerCase().trim() === cleanName);
+                renderList();
             });
         }
 
         document.addEventListener('click', (e) => {
-            const isClickable = e.target.closest('button, input, textarea, .pulse-card, .log-card, .toggle-auth, label, [onclick]');
-            if (isClickable && "vibrate" in navigator) navigator.vibrate(40); 
+            if ("vibrate" in navigator) navigator.vibrate(40); 
         });
-
     </script>
 </body>
 </html>
