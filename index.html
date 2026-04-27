@@ -41,20 +41,27 @@
         .perk-item h4 { font-family: 'Rajdhani'; color: var(--cyan); font-size: 0.9rem; margin-bottom: 5px; }
         .perk-item p { font-size: 0.8rem; color: var(--white); line-height: 1.4; }
         
-        /* --- PARTNER PROGRAM DESIGN --- */
+        /* --- PARTNER PROGRAM DESIGN (ICONIC STYLE) --- */
         .partner-card { 
-            background: linear-gradient(135deg, rgba(255,215,0,0.05) 0%, rgba(17,17,17,1) 100%);
-            border: 1px solid rgba(255,215,0,0.2);
+            background: linear-gradient(135deg, rgba(0,206,209,0.05) 0%, rgba(17,17,17,1) 100%);
+            border: 1px solid rgba(0,206,209,0.3);
             border-radius: 20px; padding: 25px; margin: 20px; text-align: center;
+            position: relative; overflow: hidden;
+            transition: all 0.4s ease;
+            animation: partner-breathe 3s infinite alternate ease-in-out;
         }
-        .partner-card h3 { font-family: 'Rajdhani'; color: #FFD700; margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase; }
+        @keyframes partner-breathe {
+            0% { box-shadow: 0 0 10px rgba(0,206,209,0.1); border-color: rgba(0,206,209,0.2); }
+            100% { box-shadow: 0 0 30px rgba(0,206,209,0.4); border-color: rgba(0,206,209,0.6); }
+        }
+        .partner-card h3 { font-family: 'Rajdhani'; color: var(--white); margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase; }
         
         .commission-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-        .comm-box { background: rgba(255,215,0,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,215,0,0.1); }
-        .comm-val { display: block; font-size: 1.8rem; font-family: 'Rajdhani'; color: #FFD700; font-weight: 700; }
+        .comm-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+        .comm-val { display: block; font-size: 1.8rem; font-family: 'Rajdhani'; color: var(--cyan); font-weight: 700; text-shadow: 0 0 10px rgba(0,206,209,0.5); }
         .comm-label { font-size: 0.55rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
         
-        .partner-btn { background: #FFD700 !important; color: #000 !important; border: none !important; margin-top: 10px; }
+        .partner-btn { background: var(--cyan) !important; color: #000 !important; border: none !important; margin-top: 10px; box-shadow: 0 0 15px rgba(0,206,209,0.3); }
 
         /* --- MODAL STYLES --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -197,9 +204,9 @@
 <!-- PARTNER PROGRAMM -->
         <h3 class="section-title">Iconic Partner Program</h3>
         <div class="partner-card">
-            <i class="fa-solid fa-handshake-angle" style="color: #FFD700; font-size: 1.5rem; margin-bottom: 10px;"></i>
-            <h3>Empfehlung senden</h3>
-            <p style="font-size: 0.75rem; color: var(--gray);">Sichere dir als <span id="partner-status-name" style="color:#FFD700; font-weight:700;">...</span> deine Provision:</p>
+            <i class="fa-solid fa-rocket" style="color: var(--cyan); font-size: 1.8rem; margin-bottom: 15px; filter: drop-shadow(0 0 8px var(--cyan));"></i>
+            <h3>Provision sichern</h3>
+            <p style="font-size: 0.75rem; color: var(--gray);">Sichere dir als <span id="partner-status-name" style="color:var(--cyan); font-weight:700;">...</span> deine Provision:</p>
             
             <div class="commission-options">
                 <div class="comm-box">
@@ -207,12 +214,12 @@
                     <span class="comm-label">Auszahlung</span>
                 </div>
                 <div class="comm-box" style="border-color: var(--cyan); background: rgba(0,206,209,0.05);">
-                    <span class="comm-val" style="color: var(--cyan);"><span id="comm-credit-val">12</span>%</span>
+                    <span class="comm-val"><span id="comm-credit-val">12</span>%</span>
                     <span class="comm-label">Gutschrift</span>
                 </div>
             </div>
             
-            <p style="font-size: 0.65rem; color: var(--gray); margin-bottom: 15px;">Wähle nach Projektabschluss deine bevorzugte Vergütung.</p>
+            <p style="font-size: 0.65rem; color: var(--gray); margin-bottom: 15px;">Empfiehl uns weiter und profitiere direkt.</p>
             <button class="btn partner-btn" onclick="contactPartnerProgram()">
                 <i class="fa-brands fa-whatsapp" style="margin-right:8px;"></i> Empfehlung melden
             </button>
@@ -417,7 +424,14 @@
             window.contactPartnerProgram = () => {
                 const client = auth.currentUser.displayName || "Kunde";
                 const r = window.activeRates || { cash: 10, credit: 12 };
-                const text = `Hallo Iconic, ich möchte jemanden für das Partner-Programm empfehlen.\n\nMein Name: ${client}\nMein Status: ${document.getElementById('status-display-name').innerText}\nMein Anspruch: ${r.cash}% Cash oder ${r.credit}% Gutschrift.`;
+                const text = `Hallo Iconic, ich möchte jemanden für das Partner-Programm empfehlen.\n\n` +
+                             `MEIN NAME: ${client}\n` +
+                             `MEIN STATUS: ${document.getElementById('status-display-name').innerText}\n` +
+                             `MEIN ANSPRUCH: ${r.cash}% Cash oder ${r.credit}% Gutschrift\n\n` +
+                             `--- EMPFEHLUNG ---\n` +
+                             `NAME/FIRMA: [Hier eintragen]\n` +
+                             `KONTAKT (Tel/Mail): [Hier eintragen]`;
+                
                 window.location.href = `https://wa.me/4915207369806?text=${encodeURIComponent(text)}`;
             };
 
