@@ -13,7 +13,6 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         :root { --cyan: #00CED1; --bg: #050505; --panel: #111111; --white: #ffffff; --gray: #888888; --danger: #ff4757; --success: #2ed573; }
@@ -106,17 +105,6 @@
         #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 10000; }
         .auth-card { background: var(--panel); padding: 40px; border-radius: 20px; border: 1px solid var(--cyan); width: 90%; max-width: 380px; text-align: center; }
         .toggle-auth { color: var(--cyan); font-size: 0.8rem; margin-top: 15px; cursor: pointer; text-decoration: underline; }
-
-        /* --- RECHNUNGEN / PDF --- */
-        #invoice-print-area {
-            display:none; background:white; color:black;
-            font-family:'Helvetica Neue',Arial,sans-serif;
-            padding:18mm 20mm 14mm 20mm;
-            width:210mm;
-            box-sizing:border-box;
-            overflow:visible;
-        }
-        .inv-dl-btn { margin-top: 14px; padding: 13px; font-size: 0.95rem; }
     </style>
 </head>
 <body>
@@ -213,10 +201,18 @@
         <div class="log-container" id="all-activities">
             <p style="text-align:center; color:var(--gray); font-size:0.8rem;">Suche Aktivitäten...</p>
         </div>
-<!-- MEINE RECHNUNGEN -->
-        <h3 class="section-title">Meine Rechnungen</h3>
-        <div class="log-container" id="all-invoices">
-            <p style="text-align:center; color:var(--gray); font-size:0.8rem;">Suche Rechnungen...</p>
+<!-- MEINE RECHNUNGEN (Drive) -->
+        <div id="invoice-drive-area" class="hidden">
+            <h3 class="section-title">Meine Rechnungen</h3>
+            <div class="log-container">
+                <div class="log-card" style="cursor:default; display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap;">
+                    <div style="font-weight:600; flex:1; min-width:150px;">Deine Rechnungen findest du hier</div>
+                    <button onclick="window.open(window.customerDriveLink, '_blank')" style="background: rgba(0, 206, 209, 0.05); border: 1px solid rgba(0, 206, 209, 0.2); color: #fff; padding: 12px 18px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-brands fa-google-drive" style="color: var(--cyan); font-size: 1.2rem;"></i>
+                        <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">DRIVE</span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- PARTNER PROGRAMM -->
@@ -272,97 +268,10 @@
         </div>
     </div>
 
-    <div id="invoice-print-area">
-        <!-- Inner wrapper: flex column, min A4 content height minus margins -->
-        <div id="inv-inner" style="display:flex;flex-direction:column;min-height:237mm;font-family:'Helvetica Neue',Arial,sans-serif;">
-
-            <!-- ── HEADER ── -->
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12mm;">
-                <!-- Sender small -->
-                <div>
-                    <div style="font-size:9px;color:#999;margin-bottom:6mm;" id="p-sender"></div>
-                    <div style="font-size:13px;line-height:1.5;font-weight:500;" id="p-recipient"></div>
-                </div>
-                <!-- Logo block -->
-                <div id="p-logo-wrapper" style="text-align:right; flex-shrink:0;"></div>
-            </div>
-
-            <!-- Invoice meta right-aligned -->
-            <div style="display:flex;justify-content:flex-end;margin-bottom:10mm;">
-                <table style="font-size:11px;line-height:1.7;text-align:left;border-collapse:collapse;">
-                    <tr><td style="padding-right:30px;color:#666;">Rechnungs-Nr.</td><td style="font-weight:700;" id="p-inv-num"></td></tr>
-                    <tr><td style="color:#666;">Rechnungsdatum</td><td id="p-inv-date"></td></tr>
-                    <tr><td style="color:#666;">Lieferdatum</td><td id="p-inv-delivery"></td></tr>
-                    <tr><td style="color:#666;">Ihre Kundennummer</td><td id="p-cust-num"></td></tr>
-                    <tr><td style="color:#666;">Ihr Ansprechpartner</td><td id="p-contact"></td></tr>
-                </table>
-            </div>
-
-            <!-- Subject -->
-            <div style="margin-bottom:8mm;">
-                <div style="font-size:15px;font-weight:700;margin-bottom:2mm;">Rechnungs Nr. <span id="p-inv-num-title"></span></div>
-                <div id="p-inv-subject" style="font-size:13px;font-weight:600;color:#333;"></div>
-            </div>
-
-            <!-- Intro text -->
-            <p style="font-size:12px;margin-bottom:4mm;">Sehr geehrte Damen und Herren,</p>
-            <p style="font-size:12px;margin-bottom:6mm;">vielen Dank für Ihren Auftrag und das damit verbundene Vertrauen!<br>Hiermit stelle ich Ihnen die folgenden Leistungen in Rechnung:</p>
-
-            <!-- Items table -->
-            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6mm;">
-                <thead>
-                    <tr style="background:#f0f0f0;text-align:left;">
-                        <th style="padding:8px 10px;width:32px;">Pos.</th>
-                        <th style="padding:8px 10px;">Beschreibung</th>
-                        <th style="padding:8px 10px;text-align:right;white-space:nowrap;">Menge</th>
-                        <th style="padding:8px 10px;text-align:right;white-space:nowrap;">Einzelpreis</th>
-                        <th style="padding:8px 10px;text-align:right;white-space:nowrap;">MwSt.</th>
-                        <th style="padding:8px 10px;text-align:right;white-space:nowrap;">Gesamtpreis</th>
-                    </tr>
-                </thead>
-                <tbody id="p-items"></tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="5" style="padding:10px 10px 4px;text-align:right;font-size:11px;">Gesamtbetrag netto</td>
-                        <td id="p-total-net" style="padding:10px 10px 4px;text-align:right;font-size:11px;"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="5" style="padding:2px 10px;text-align:right;font-size:10px;color:#888;" id="p-tax-note">Umsatzsteuer nicht erhoben gemäß §19UStG.</td>
-                        <td id="p-total-tax-amt" style="padding:2px 10px;text-align:right;font-size:10px;color:#888;"></td>
-                    </tr>
-                    <tr style="background:#f0f0f0;font-weight:700;">
-                        <td colspan="5" style="padding:8px 10px;text-align:right;">Gesamtbetrag brutto</td>
-                        <td id="p-total-gross" style="padding:8px 10px;text-align:right;"></td>
-                    </tr>
-                </tfoot>
-            </table>
-
-            <!-- Payment text — flex-grow pushes footer down -->
-            <div style="flex:1;">
-                <p style="font-size:11px;line-height:1.7;color:#333;">
-                    Zahlungsbedingungen: Zahlung sofort nach Rechnungseingang ohne Abzüge.<br><br>
-                    Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten angegebene Konto.<br>
-                    Der Rechnungsbetrag ist sofort fällig.<br><br>
-                    Mit freundlichen Grüßen<br>
-                    <span id="p-sender-name" style="font-weight:600;">Nikolas Kusnierski</span>
-                </p>
-            </div>
-
-            <!-- ── FOOTER — always at bottom, never cut off ── -->
-            <div style="margin-top:10mm;border-top:1px solid #ddd;padding-top:5mm;display:grid;grid-template-columns:1fr 1fr 1.4fr 1.4fr;gap:8px;font-size:8.5px;color:#666;line-height:1.6;">
-    <div id="f-addr"></div>
-    <div id="f-contact"></div>
-    <div id="f-owner"></div>
-    <div id="f-bank"></div>
-</div>
-
-        </div><!-- /inv-inner -->
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpe53FCPn8A-ZqrIadjm_cx6IRyUAy0h4",
@@ -519,7 +428,7 @@
                 const crmSnap = await getDocs(crmQuery);
                 crmSnap.forEach((doc) => { 
                     const d = doc.data();
-                    if(d.drive) { window.customerDriveLink = d.drive; document.getElementById('drive-area').classList.remove('hidden'); }
+                    if(d.drive) { window.customerDriveLink = d.drive; document.getElementById('drive-area').classList.remove('hidden'); document.getElementById('invoice-drive-area').classList.remove('hidden'); }
                     if(d.statusLevel) manualStatusLevel = parseInt(d.statusLevel);
                 });
             };
@@ -601,117 +510,6 @@
                         </div>`;
                 });
             };
-
-            // --- RECHNUNGEN (nur eigene, stornierte ausgeblendet) ---
-            const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-            const eur = (n) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
-            const deDate = (iso) => iso ? iso.split('-').reverse().join('.') : '';
-            let myInvoices = [];
-
-            const renderInvoices = () => {
-                const box = document.getElementById('all-invoices');
-                if (myInvoices.length === 0) {
-                    box.innerHTML = `<p style="text-align:center; color:var(--gray); font-size:0.8rem; padding:10px;">Noch keine Rechnungen vorhanden.</p>`;
-                    return;
-                }
-                box.innerHTML = myInvoices.map(inv => {
-                    const paid = !!inv.paidDate;
-                    return `
-                    <div class="log-card" style="cursor:default;">
-                        <span class="status-badge ${paid ? 'status-paid' : 'status-unpaid'}">${paid ? 'Bezahlt' : 'Offen'}</span>
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div style="flex:1; padding-right:15px;">
-                                <div style="font-weight:600;">Rechnung ${esc(inv.invoiceNumber)}</div>
-                                ${inv.subject ? `<div style="font-size:0.75rem; color:var(--white); margin-top:3px;">${esc(inv.subject)}</div>` : ''}
-                                <div style="font-size:0.75rem; color:var(--gray); margin-top:3px;"><i class="fa-regular fa-calendar"></i> ${esc(deDate(inv.date))}</div>
-                            </div>
-                            <div style="text-align:right"><div style="color:var(--cyan); font-weight:700;">${eur(inv.total)}</div></div>
-                        </div>
-                        <button class="btn inv-dl-btn" onclick="downloadInvoice('${inv.id}', this)"><i class="fa-solid fa-file-pdf" style="margin-right:8px;"></i>PDF herunterladen</button>
-                    </div>`;
-                }).join('');
-            };
-
-            window.downloadInvoice = async (id, btn) => {
-                const data = myInvoices.find(i => i.id === id);
-                if (!data) return;
-                const oldHtml = btn.innerHTML;
-                btn.disabled = true; btn.innerText = 'Wird erstellt...';
-                const printArea = document.getElementById('invoice-print-area');
-                try {
-                    const profileSnap = await getDoc(doc(db, "users", ADMIN_UID, "settings", "profile"));
-                    const p = profileSnap.exists() ? profileSnap.data() : {
-                        company: "Iconic Visual Concepts", owner: "Nikolas Kusnierski", street: "Leibnizstraße 3", zip: "32425", city: "Minden",
-                        email: "kusnierski@outlook.de", phone: "015207369806", bank: "Revolut", iban: "LT10 3250 0169 3239 0408", bic: "REVOLT21"
-                    };
-                    const logoWrapper = document.getElementById('p-logo-wrapper');
-                    if (p.logo && p.logo.trim() !== "") {
-                        logoWrapper.innerHTML = `<img src="${esc(p.logo)}" style="max-height: 22mm; max-width: 60mm; object-fit: contain;">`;
-                    } else {
-                        logoWrapper.innerHTML = `<div style="background:#111; color:#fff; padding:12px 18px; font-family:'Arial Black', sans-serif; font-weight:900; font-size:18px; letter-spacing:2px; text-align:right; line-height:1.2;">${esc((p.company || '').toUpperCase())}</div>`;
-                    }
-                    const a = data.address || {};
-                    printArea.style.display = 'block';
-                    document.getElementById('p-sender').innerText = `${p.owner} · ${p.street} · ${p.zip} ${p.city}`;
-                    document.getElementById('p-recipient').innerHTML = `<strong>${esc(data.customerName)}</strong><br>${esc(a.street)}<br>${esc(a.zip)} ${esc(a.city)}<br>${esc(a.country)}`;
-                    document.getElementById('p-inv-num').innerText = data.invoiceNumber;
-                    document.getElementById('p-inv-num-title').innerText = data.invoiceNumber;
-                    document.getElementById('p-inv-subject').innerText = data.subject || "";
-                    document.getElementById('p-inv-date').innerText = new Date(data.date).toLocaleDateString('de-DE');
-                    document.getElementById('p-inv-delivery').innerText = new Date(data.deliveryDate || data.date).toLocaleDateString('de-DE');
-                    document.getElementById('p-cust-num').innerText = data.customerNumber || "N/A";
-                    document.getElementById('p-contact').innerText = p.owner;
-                    document.getElementById('p-items').innerHTML = (data.items || []).map((it, i) => `
-                        <tr>
-                            <td style="padding:8px 10px;">${i+1}.</td>
-                            <td style="padding:8px 10px;"><strong>${esc(it.desc)}</strong></td>
-                            <td style="padding:8px 10px; text-align:right;">${esc(it.qty)} ${it.type === 'std' ? 'Std' : 'pauschal'}</td>
-                            <td style="padding:8px 10px; text-align:right;">${eur(it.price)}</td>
-                            <td style="padding:8px 10px; text-align:right; font-size:10px; color:#888;">${esc(it.taxRate || 0)}%</td>
-                            <td style="padding:8px 10px; text-align:right;">${eur(it.sum)}</td>
-                        </tr>`).join('');
-                    const pNetto = data.totalNetto !== undefined ? data.totalNetto : data.total;
-                    const pTax = data.totalTax !== undefined ? data.totalTax : 0;
-                    document.getElementById('p-total-net').innerText = eur(pNetto);
-                    document.getElementById('p-total-gross').innerText = eur(data.total);
-                    document.getElementById('p-sender-name').innerText = p.owner;
-                    if (pTax > 0) {
-                        document.getElementById('p-tax-note').innerText = 'Enthaltene Umsatzsteuer:';
-                        document.getElementById('p-total-tax-amt').innerText = eur(pTax);
-                    } else {
-                        document.getElementById('p-tax-note').innerText = 'Umsatzsteuer nicht erhoben gemäß §19UStG.';
-                        document.getElementById('p-total-tax-amt').innerText = '';
-                    }
-                    document.getElementById('f-addr').innerHTML = `<strong>${esc(p.company)}</strong><br>${esc(p.street)}<br>${esc(p.zip)} ${esc(p.city)}`;
-                    document.getElementById('f-contact').innerHTML = `Tel. ${esc(p.phone)}<br>E-Mail ${esc(p.email)}`;
-                    document.getElementById('f-owner').innerText = `Inhaber/-in ${p.owner}`;
-                    document.getElementById('f-bank').innerHTML = `Bank ${esc(p.bank)}<br>IBAN ${esc(p.iban)}<br>BIC ${esc(p.bic)}`;
-
-                    await html2pdf().set({
-                        margin: 0,
-                        filename: `${data.invoiceNumber}_${data.customerName}.pdf`,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
-                    }).from(printArea).save();
-                } catch (e) {
-                    console.error(e);
-                    alert("Die Rechnung konnte gerade nicht erstellt werden. Bitte versuche es später erneut.");
-                } finally {
-                    printArea.style.display = 'none';
-                    btn.disabled = false; btn.innerHTML = oldHtml;
-                }
-            };
-
-            onSnapshot(collection(db, "users", ADMIN_UID, "invoices"), (snap) => {
-                myInvoices = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                    .filter(i => !i.isCancelled && i.customerName && i.customerName.toLowerCase().trim() === cleanName)
-                    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                renderInvoices();
-            }, (err) => {
-                console.error(err);
-                document.getElementById('all-invoices').innerHTML = `<p style="text-align:center; color:var(--gray); font-size:0.8rem; padding:10px;">Rechnungen konnten nicht geladen werden.</p>`;
-            });
 
             onSnapshot(collection(db, "users", ADMIN_UID, "worklogs"), (snap) => {
                 workLogs = snap.docs.map(d => {
