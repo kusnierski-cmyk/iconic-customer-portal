@@ -105,6 +105,15 @@
         #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); position: fixed; width: 100%; z-index: 10000; }
         .auth-card { background: var(--panel); padding: 40px; border-radius: 20px; border: 1px solid var(--cyan); width: 90%; max-width: 380px; text-align: center; }
         .toggle-auth { color: var(--cyan); font-size: 0.8rem; margin-top: 15px; cursor: pointer; text-decoration: underline; }
+
+        /* --- AUFKLAPPBARE AKTIVITÄTEN --- */
+        .collapse-head { background: var(--panel); border: 1px solid rgba(0,206,209,0.35); border-radius: 15px; margin: 30px 20px 15px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s; }
+        .collapse-head:active { background: #1a1a1a; }
+        .collapse-title { font-family: 'Rajdhani'; font-size: 1.2rem; color: var(--white); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .collapse-count { display: inline-block; background: rgba(0,206,209,0.15); color: var(--cyan); border-radius: 20px; padding: 1px 10px; font-size: 0.8rem; margin-left: 8px; vertical-align: middle; }
+        .collapse-right { color: var(--cyan); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+        .collapse-right i { font-size: 1rem; transition: transform 0.25s; }
+        .collapse-head.open .collapse-right i { transform: rotate(180deg); }
     </style>
 </head>
 <body>
@@ -197,8 +206,11 @@
             <p id="live-desc" style="font-size:0.8rem; color:var(--gray);">Aktuell keine aktive Sitzung.</p>
         </div>
 
-        <h3 class="section-title">Aktivitäten & Historie</h3>
-        <div class="log-container" id="all-activities">
+        <div class="collapse-head" onclick="toggleActivities()">
+            <div class="collapse-title">Aktivitäten &amp; Historie <span id="activities-count" class="collapse-count">0</span></div>
+            <div class="collapse-right"><span id="activities-hint">Aufklappen</span> <i id="activities-chevron" class="fa-solid fa-chevron-down"></i></div>
+        </div>
+        <div class="log-container hidden" id="all-activities">
             <p style="text-align:center; color:var(--gray); font-size:0.8rem;">Suche Aktivitäten...</p>
         </div>
 <!-- MEINE RECHNUNGEN (Drive) -->
@@ -359,6 +371,13 @@
 
         window.closeDetailModal = () => { document.getElementById('detail-modal').style.display = 'none'; };
 
+        window.toggleActivities = () => {
+            const box = document.getElementById('all-activities');
+            const open = box.classList.toggle('hidden') === false;
+            document.querySelector('.collapse-head').classList.toggle('open', open);
+            document.getElementById('activities-hint').innerText = open ? 'Zuklappen' : 'Aufklappen';
+        };
+
         onAuthStateChanged(auth, (user) => {
             if(user) {
                 document.getElementById('auth-screen').classList.add('hidden');
@@ -475,6 +494,7 @@
                 const container = document.getElementById('all-activities');
                 globalCombinedItems = [...workLogs, ...transactions];
                 globalCombinedItems.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
+                document.getElementById('activities-count').innerText = globalCombinedItems.length;
 
                 let workRevenue = 0;
                 workLogs.forEach(log => { workRevenue += (log.earned || 0); });
