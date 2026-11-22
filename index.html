@@ -442,7 +442,7 @@
             
             // WhatsApp Link für Partner Programm
             window.contactPartnerProgram = () => {
-                const client = auth.currentUser.displayName || "Kunde";
+                const client = (clientName && clientName !== "iconic") ? clientName : "Kunde";
                 const r = window.activeRates || { cash: 10, credit: 12 };
                 const text = `Hallo Iconic, ich möchte jemanden für das Partner-Programm empfehlen.\n\n` +
                              `MEIN NAME: ${client}\n` +
