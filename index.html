@@ -288,7 +288,7 @@
                 </button>
             </div>
             <div style="margin-bottom: 12px;">
-                <button onclick="window.location.href='https://wa.me/4915207369806?text=Hallo%20ICONIC,%20ich%20habe%20eine%20Frage%20zu%20meinem%20Projekt!'" style="background: var(--panel); border: 1px solid rgba(255,255,255,0.05); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
+                <button onclick="contactWhatsApp()" style="background: var(--panel); border: 1px solid rgba(255,255,255,0.05); color: #fff; padding: 16px; border-radius: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
                     <i class="fa-brands fa-whatsapp" style="color: var(--cyan); font-size: 1.5rem;"></i>
                     <span style="font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 1px;">WHATSAPP CHAT</span>
                 </button>
@@ -341,6 +341,13 @@
         };
 
         window.logout = () => signOut(auth).then(() => location.reload());
+
+        // WhatsApp-Chat-Button (Service & Kontakt): nennt den Firmennamen, sobald er bekannt ist
+        window.contactWhatsApp = () => {
+            const n = window.portalClientName;
+            const text = n ? `Hallo ICONIC, hier ist ${n}. Ich habe eine Frage zu meinem Projekt!` : `Hallo ICONIC, ich habe eine Frage zu meinem Projekt!`;
+            window.location.href = `https://wa.me/4915207369806?text=${encodeURIComponent(text)}`;
+        };
 
         window.openDetailModal = (id) => {
             const item = globalCombinedItems.find(i => i.id === id);
@@ -406,6 +413,7 @@
 
         function startSync(clientName) {
             const cleanName = clientName.toLowerCase().trim();
+            window.portalClientName = (clientName && clientName !== "iconic") ? clientName : "";
             let manualStatusLevel = null;
 
             const levels = {
